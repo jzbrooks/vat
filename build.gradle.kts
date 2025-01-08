@@ -62,6 +62,14 @@ tasks {
         dependsOn("generateConstants")
     }
 
+    named("runKtlintCheckOverMainSourceSet") {
+        dependsOn("generateConstants")
+    }
+
+    named("runKtlintFormatOverMainSourceSet") {
+        dependsOn("generateConstants")
+    }
+
     jar {
         dependsOn(configurations.runtimeClasspath)
         manifest {
