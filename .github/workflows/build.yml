@@ -36,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vat
-          path: vat/build/libs/vat
+          path: build/libs/vat
