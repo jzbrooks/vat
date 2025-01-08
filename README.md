@@ -2,6 +2,12 @@
 
 vat renders vector graphics (SVG & Android Vector Drawables) to your terminal.
 
+## Example
+
+<img width="798" alt="Screenshot 2025-01-07 at 9 26 30 PM" src="https://github.com/user-attachments/assets/10345d73-50ca-4d45-b982-e459914d6ef9" />
+
+The image can be found at http://plurib.us/1shot/2008/eleven_below/
+
 ## Command Line Interface
 
 ```
