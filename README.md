@@ -1,4 +1,4 @@
-## vgo
+## vat
 
 vat renders vector graphics (SVG & Android Vector Drawables) to your terminal.
 
