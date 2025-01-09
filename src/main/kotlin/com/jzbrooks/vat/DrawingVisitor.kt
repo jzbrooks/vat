@@ -23,6 +23,8 @@ import org.jetbrains.skia.BlendMode
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
 import org.jetbrains.skia.Paint
+import org.jetbrains.skia.PaintStrokeCap
+import org.jetbrains.skia.PaintStrokeJoin
 import org.jetbrains.skia.PathDirection
 import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.Path as SkiaPath
@@ -61,6 +63,22 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
             Paint().apply {
                 isAntiAlias = true
                 setStroke(true)
+                strokeWidth = path.strokeWidth
+                strokeMiter = path.strokeMiterLimit
+                strokeJoin = when (path.strokeLineJoin) {
+                    Path.LineJoin.MITER -> PaintStrokeJoin.MITER
+                    Path.LineJoin.ROUND -> PaintStrokeJoin.ROUND
+                    Path.LineJoin.BEVEL -> PaintStrokeJoin.BEVEL
+
+                    // todo: these two have no analogs in skia paint
+                    Path.LineJoin.ARCS -> PaintStrokeJoin.ROUND
+                    Path.LineJoin.MITER_CLIP -> PaintStrokeJoin.MITER
+                }
+                strokeCap = when (path.strokeLineCap) {
+                    Path.LineCap.BUTT -> PaintStrokeCap.BUTT
+                    Path.LineCap.ROUND -> PaintStrokeCap.ROUND
+                    Path.LineCap.SQUARE -> PaintStrokeCap.SQUARE
+                }
                 color4f =
                     Color4f(
                         path.stroke.red.toInt() / 255f,
