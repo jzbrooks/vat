@@ -3,6 +3,15 @@
 vat renders vector graphics (SVG & Android Vector Drawables) to your terminal.
 
 Any terminal that implements the kitty graphics protocol should work (ghostty, kitty, wezterm, etc)
+
+## Installation
+
+#### Homebrew
+`brew install jzbrooks/repo/vat`
+
+#### Manually
+Download the distribution from the releases page and ensure it has execute permission. Give it execute permissions e.g. `chmod u+x vgo`.
+
 ## Example
 
 <img width="798" alt="Screenshot 2025-01-07 at 9 26 30 PM" src="https://github.com/user-attachments/assets/10345d73-50ca-4d45-b982-e459914d6ef9" />
