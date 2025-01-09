@@ -26,6 +26,7 @@ The image can be found at http://plurib.us/1shot/2008/eleven_below/.
 > vat [options] [file]
 
 Options:
+  -s --scale      scale factor (float or integer)
   -h --help       print this message
   -v --version    print the version number
 ```
