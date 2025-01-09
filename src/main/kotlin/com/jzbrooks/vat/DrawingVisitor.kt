@@ -1,6 +1,7 @@
 package com.jzbrooks.vat
 
 import com.jzbrooks.vgo.core.graphic.ClipPath
+import com.jzbrooks.vgo.core.graphic.ContainerElement
 import com.jzbrooks.vgo.core.graphic.ElementVisitor
 import com.jzbrooks.vgo.core.graphic.Extra
 import com.jzbrooks.vgo.core.graphic.Graphic
@@ -18,6 +19,7 @@ import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
 import com.jzbrooks.vgo.core.optimization.BreakoutImplicitCommands
 import com.jzbrooks.vgo.core.optimization.CommandVariant
+import org.jetbrains.skia.BlendMode
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
 import org.jetbrains.skia.Paint
@@ -33,8 +35,12 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
     }
 
     override fun visit(clipPath: ClipPath) {
-        for (element in clipPath.elements.filterIsInstance<Path>()) {
-            canvas.clipPath(element.toSkiaPath())
+        for (element in clipPath.elements) {
+            if (element is ContainerElement) {
+                element.accept(this)
+            } else if (element is Path) {
+                canvas.clipPath(element.toSkiaPath())
+            }
         }
     }
 
