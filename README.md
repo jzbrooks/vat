@@ -10,7 +10,7 @@ Any terminal that implements the kitty graphics protocol should work (ghostty, k
 `brew install jzbrooks/repo/vat`
 
 #### Manually
-Download the distribution from the releases page and ensure it has execute permission. Give it execute permissions e.g. `chmod u+x vgo`.
+Download the distribution from the releases page and ensure it has execute permission. Give it execute permissions e.g. `chmod u+x vat`.
 
 ## Example
 
