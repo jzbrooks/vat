@@ -8,6 +8,7 @@ import com.jzbrooks.vgo.core.graphic.Graphic
 import com.jzbrooks.vgo.core.graphic.Group
 import com.jzbrooks.vgo.core.graphic.Path
 import com.jzbrooks.vgo.core.graphic.command.ClosePath
+import com.jzbrooks.vgo.core.graphic.command.Command
 import com.jzbrooks.vgo.core.graphic.command.CubicBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.EllipticalArcCurve
 import com.jzbrooks.vgo.core.graphic.command.HorizontalLineTo
@@ -19,7 +20,7 @@ import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
 import com.jzbrooks.vgo.core.optimization.BreakoutImplicitCommands
 import com.jzbrooks.vgo.core.optimization.CommandVariant
-import org.jetbrains.skia.BlendMode
+import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
 import org.jetbrains.skia.Paint
@@ -110,9 +111,13 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
         BreakoutImplicitCommands().visit(this)
         CommandVariant(CommandVariant.Mode.Relative).visit(this)
 
-        var previousControlPoint: com.jzbrooks.vgo.core.util.math.Point? = null
+        var previousControlPoint = Point.ZERO
         return SkiaPath().apply {
             for (command in commands) {
+                if (command.shouldResetPreviousControlPoint) {
+                    previousControlPoint = Point.ZERO
+                }
+
                 when (command) {
                     is MoveTo -> {
                         val coord = command.parameters.first()
@@ -128,7 +133,7 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
                     }
                     is VerticalLineTo -> {
                         val coord = command.parameters.first()
-                        rLineTo(coord, 0f)
+                        rLineTo(0f, coord)
                     }
                     is CubicBezierCurve -> {
                         val params = command.parameters.first()
@@ -146,6 +151,7 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
                         val params = command.parameters.first()
                         val reflected = checkNotNull(previousControlPoint) * -1f
                         rCubicTo(reflected.x, reflected.y, params.endControl.x, params.endControl.y, params.end.x, params.end.y)
+                        previousControlPoint = params.endControl
                     }
                     is QuadraticBezierCurve -> {
                         val params = command.parameters.first()
@@ -156,6 +162,7 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
                         val params = command.parameters.first()
                         val reflected = checkNotNull(previousControlPoint) * -1f
                         rQuadTo(reflected.x, reflected.y, params.x, params.y)
+                        previousControlPoint = reflected
                     }
 
                     is EllipticalArcCurve -> {
@@ -182,4 +189,22 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
             }
         }
     }
+
+    private val Command.shouldResetPreviousControlPoint: Boolean
+        get() =
+            when (this) {
+                is MoveTo,
+                is LineTo,
+                is HorizontalLineTo,
+                is VerticalLineTo,
+                is EllipticalArcCurve,
+                ClosePath,
+                -> true
+
+                is CubicBezierCurve,
+                is SmoothCubicBezierCurve,
+                is QuadraticBezierCurve,
+                is SmoothQuadraticBezierCurve,
+                -> false
+            }
 }
