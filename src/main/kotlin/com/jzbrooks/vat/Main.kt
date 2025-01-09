@@ -7,6 +7,7 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
 private const val HELP_MESSAGE = """
@@ -15,6 +16,7 @@ private const val HELP_MESSAGE = """
 vat renders vector artwork (SVG & Android Vector Drawable) to the terminal.
 
 Options:
+  -s --scale      scale factor (float or integer)
   -h --help       print this message
   -v --version    print the version number
 """
@@ -36,6 +38,16 @@ fun main(args: Array<String>) {
         return
     }
 
+    val scale = argReader.readOption("s|scale")?.let {
+        val factor = it.toFloatOrNull()
+        if (factor != null) {
+            factor
+        } else {
+            System.err.println("$it is not a floating point value")
+            1f
+        }
+    } ?: 1f
+
     val path = argReader.readArguments().first()
     val image =
         File(path).inputStream().use { inputStream ->
@@ -47,16 +59,13 @@ fun main(args: Array<String>) {
             parse(document.documentElement)
         }
 
-    val surface =
-        Surface.makeRasterN32Premul(
-            image.foreign["android:width"]!!.filter {
-                it.isDigit()
-            }.toInt(),
-            image.foreign["android:height"]!!.filter { it.isDigit() }.toInt(),
-        )
+    val width = image.foreign["android:width"]!!.filter(Char::isDigit).toInt()
+    val height = image.foreign["android:height"]!!.filter(Char::isDigit).toInt()
+
+    val surface = Surface.makeRasterN32Premul((width * scale).roundToInt(), (height * scale).roundToInt())
     surface.canvas.clear(0xFFFFFFFF.toInt())
 
-    val visitor = DrawingVisitor(surface.canvas)
+    val visitor = DrawingVisitor(surface.canvas, scale, scale)
     image.accept(visitor)
 
     val raster = surface.makeImageSnapshot()
@@ -71,6 +80,6 @@ fun main(args: Array<String>) {
 
     val data = Base64.encode(byteArray)
 
-    val command = "\u001B_Ga=T,f=100,Y=00000000;$data\u001B\\"
+    val command = "\u001B_Ga=T,f=100;$data\u001B\\"
     println(command)
 }

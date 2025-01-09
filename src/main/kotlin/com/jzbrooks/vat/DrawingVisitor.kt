@@ -23,6 +23,7 @@ import com.jzbrooks.vgo.core.optimization.CommandVariant
 import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
+import org.jetbrains.skia.Matrix33
 import org.jetbrains.skia.Paint
 import org.jetbrains.skia.PaintStrokeCap
 import org.jetbrains.skia.PaintStrokeJoin
@@ -30,7 +31,7 @@ import org.jetbrains.skia.PathDirection
 import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.Path as SkiaPath
 
-class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
+class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : ElementVisitor {
     override fun visit(graphic: Graphic) {
         for (element in graphic.elements) {
             element.accept(this)
@@ -112,7 +113,7 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
         CommandVariant(CommandVariant.Mode.Relative).visit(this)
 
         var previousControlPoint = Point.ZERO
-        return SkiaPath().apply {
+        val path = SkiaPath().apply {
             for (command in commands) {
                 if (command.shouldResetPreviousControlPoint) {
                     previousControlPoint = Point.ZERO
@@ -187,6 +188,13 @@ class DrawingVisitor(val canvas: Canvas) : ElementVisitor {
                     ClosePath -> closePath()
                 }
             }
+        }
+
+        return if (sX != null && sY != null) {
+            val scale = Matrix33.makeScale(sX, sY)
+            path.transform(scale)
+        } else {
+            path
         }
     }
 
