@@ -40,5 +40,5 @@ jobs:
       - name: archive vat
         uses: actions/upload-artifact@v4
         with:
-          name: vat
+          name: vat-${{ matrix.target }}
           path: build/libs/vat-${{ matrix.target }}
