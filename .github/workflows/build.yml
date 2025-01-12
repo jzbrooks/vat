@@ -36,7 +36,7 @@ jobs:
         if: ${{ contains(matrix.target, 'macos') || contains(matrix.target, 'linux') }}
         run: |
           VARIANT=$(echo ${{ matrix.target }} | sed -E 's/-x64/X64/; s/-arm64/Arm64/')
-          ./gradlew ${variant}Binary
+          ./gradlew "${VARIANT}Binary"
 
       - name: Archive vat-${{ matrix.target }}
         if: ${{ contains(matrix.target, 'macos') || contains(matrix.target, 'linux') }}
@@ -49,12 +49,12 @@ jobs:
         if: ${{ contains(matrix.target, 'windows') }}
         run: |
           VARIANT=$(echo ${{ matrix.target }} | sed -E 's/-x64/X64/; s/-arm64/Arm64/')
-          ./gradlew ${variant}Optimize
+          ./gradlew ${VARIANT}Optimize
 
       - name: Archive vat-${{ matrix.target }}.jar
         if: ${{ contains(matrix.target, 'windows') }}
         uses: actions/upload-artifact@v4
         with:
           name: vat-${{ matrix.target }}.jar
-          path: build/libs/vat-${{ matrix.target }}.jar
+          path: build/libs/vat-${{ matrix.target }}-*.jar
 
