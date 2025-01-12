@@ -182,23 +182,26 @@ tasks {
                 dependsOn("$os${arch.capitalized()}Jar")
             }
 
-            val binaryFileProp = layout.buildDirectory.file("libs/vat-$os-$arch")
-            register("$os${arch.capitalized()}Binary") {
-                description = "Prepends shell script in the jar to improve CLI"
-                group = "build"
+            if (os != "windows") {
+                val binaryFileProp = layout.buildDirectory.file("libs/vat-$os-$arch")
+                register("$os${arch.capitalized()}Binary") {
+                    description = "Prepends shell script in the jar to improve CLI"
+                    group = "build"
 
-                dependsOn("$os${arch.capitalized()}Optimize")
+                    dependsOn("$os${arch.capitalized()}Optimize")
 
-                inputs.file("build/libs/vat-$os-$arch-$version.jar")
-                outputs.file(binaryFileProp)
+                    inputs.file("build/libs/vat-$os-$arch-$version.jar")
+                    outputs.file(binaryFileProp)
 
-                doLast {
-                    val binaryFile = binaryFileProp.get().asFile
-                    binaryFile.parentFile.mkdirs()
-                    binaryFile.delete()
-                    binaryFile.appendText("#!/bin/sh\n\nexec java \$JAVA_OPTS -jar \$0 \"\$@\"\n\n")
-                    file("build/libs/vat-$os-$arch-$version.jar").inputStream().use { binaryFile.appendBytes(it.readBytes()) }
-                    binaryFile.setExecutable(true, false)
+                    doLast {
+                        val binaryFile = binaryFileProp.get().asFile
+                        binaryFile.parentFile.mkdirs()
+                        binaryFile.delete()
+                        binaryFile.appendText("#!/bin/sh\n\nexec java \$JAVA_OPTS -jar \$0 \"\$@\"\n\n")
+                        file("build/libs/vat-$os-$arch-$version.jar").inputStream()
+                            .use { binaryFile.appendBytes(it.readBytes()) }
+                        binaryFile.setExecutable(true, false)
+                    }
                 }
             }
         }
@@ -233,9 +236,12 @@ tasks {
         dependsOn("$targetOs${targetArch.capitalized()}Optimize")
     }
 
-    val binary by registering {
-        description = "Prepends shell script in the jar to improve CLI for the current system ($targetOs-$targetArch)"
-        group = "build"
-        dependsOn("$targetOs${targetArch.capitalized()}Binary")
+    if (targetOs != "windows") {
+        val binary by registering {
+            description =
+                "Prepends shell script in the jar to improve CLI for the current system ($targetOs-$targetArch)"
+            group = "build"
+            dependsOn("$targetOs${targetArch.capitalized()}Binary")
+        }
     }
 }

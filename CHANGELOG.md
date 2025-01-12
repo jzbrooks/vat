@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Build targets for windows and linux systems
 
 ### Changed
 

@@ -29,16 +29,32 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: build
-        run: ./gradlew build
+      - name: Check style
+        run: ./gradlew ktlintCheck
 
-      - name: release binary
+      - name: Build unix binary
+        if: ${{ contains(matrix.target, 'macos') || contains(matrix.target, 'linux') }}
         run: |
           VARIANT=$(echo ${{ matrix.target }} | sed -E 's/-x64/X64/; s/-arm64/Arm64/')
           ./gradlew ${variant}Binary
 
-      - name: archive vat
+      - name: Archive vat-${{ matrix.target }}
+        if: ${{ contains(matrix.target, 'macos') || contains(matrix.target, 'linux') }}
         uses: actions/upload-artifact@v4
         with:
           name: vat-${{ matrix.target }}
           path: build/libs/vat-${{ matrix.target }}
+
+      - name: Build windows jar
+        if: ${{ contains(matrix.target, 'windows') }}
+        run: |
+          VARIANT=$(echo ${{ matrix.target }} | sed -E 's/-x64/X64/; s/-arm64/Arm64/')
+          ./gradlew ${variant}Optimize
+
+      - name: Archive vat-${{ matrix.target }}.jar
+        if: ${{ contains(matrix.target, 'windows') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vat-${{ matrix.target }}.jar
+          path: build/libs/vat-${{ matrix.target }}.jar
+
