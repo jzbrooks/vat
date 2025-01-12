@@ -1,6 +1,7 @@
 package com.jzbrooks.vat
 
-import com.jzbrooks.vgo.vd.parse
+import com.jzbrooks.vgo.svg.ScalableVectorGraphic
+import com.jzbrooks.vgo.vd.VectorDrawable
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Surface
 import java.io.File
@@ -9,6 +10,8 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
+import com.jzbrooks.vgo.svg.parse as svgParse
+import com.jzbrooks.vgo.vd.parse as vdParse
 
 private const val HELP_MESSAGE = """
 > vat [options] [file]
@@ -56,11 +59,33 @@ fun main(args: Array<String>) {
             val document = documentBuilderFactory.newDocumentBuilder().parse(inputStream)
             document.documentElement.normalize()
 
-            parse(document.documentElement)
+            when (document.documentElement.tagName) {
+                "vector" -> vdParse(document.documentElement)
+                "svg" -> svgParse(document.documentElement)
+                else -> null
+            }
         }
 
-    val width = image.foreign["android:width"]!!.filter(Char::isDigit).toInt()
-    val height = image.foreign["android:height"]!!.filter(Char::isDigit).toInt()
+    if (image == null) {
+        System.err.println("Unable to load image $path")
+        exitProcess(-1)
+    }
+
+    val (width, height) = when (image) {
+        is VectorDrawable -> {
+            val width = image.foreign["android:width"]!!.filter(Char::isDigit).toInt()
+            val height = image.foreign["android:height"]!!.filter(Char::isDigit).toInt()
+            Pair(width, height)
+        }
+        is ScalableVectorGraphic -> {
+            val viewBox = image.foreign["viewBox"]!!.split("[\\s,]+".toRegex()).map { it.filter(Char::isDigit).toInt() }
+            Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
+        }
+        else -> {
+            System.err.println("Unknown image type $image")
+            exitProcess(-1)
+        }
+    }
 
     val surface = Surface.makeRasterN32Premul((width * scale).roundToInt(), (height * scale).roundToInt())
     surface.canvas.clear(0xFFFFFFFF.toInt())
