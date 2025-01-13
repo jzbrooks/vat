@@ -26,19 +26,16 @@ val targets = mapOf(
 
 for ((os, architectures) in targets) {
     for (arch in architectures) {
-        configurations.create("$os${arch.capitalized()}RuntimeOnly")
+        configurations.create("$os${arch.capitalized()}Implementation") {
+            dependencies {
+                implementation("org.jetbrains.skiko:skiko-awt-runtime-$os-$arch:0.8.18")
+            }
+        }
     }
 }
 
 dependencies {
     implementation("org.jetbrains.skiko:skiko:0.8.18")
-    for ((os, architectures) in targets) {
-        for (arch in architectures) {
-            configurations.named("$os${arch.capitalized()}RuntimeOnly").configure {
-                this("org.jetbrains.skiko:skiko-awt-runtime-$os-$arch:0.8.18")
-            }
-        }
-    }
 
     implementation("com.jzbrooks:vgo:3.0.0")
     implementation("com.jzbrooks:vgo-core:3.0.0")
@@ -113,6 +110,7 @@ tasks {
         for (arch in architectures) {
             register<Jar>("$os${arch.capitalized()}Jar") {
                 dependsOn(configurations.runtimeClasspath)
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
                 manifest {
                     attributes["Main-Class"] = "com.jzbrooks.vat.MainKt"
