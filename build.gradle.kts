@@ -25,14 +25,20 @@ val targets = mapOf(
     "linux" to listOf("x64", "arm64"),
 )
 
-for ((os, architectures) in targets) {
-    for (arch in architectures) {
-        configurations.create("$os${arch.capitalized()}Implementation") {
-            dependencies {
-                implementation("org.jetbrains.skiko:skiko-awt-runtime-$os-$arch:0.8.18")
-            }
-        }
-    }
+val macosArm64RuntimeOnly: Configuration by configurations.creating {
+    extendsFrom(configurations["runtimeOnly"])
+}
+val windowsX64RuntimeOnly: Configuration by configurations.creating {
+    extendsFrom(configurations["runtimeOnly"])
+}
+val windowsArm64RuntimeOnly: Configuration by configurations.creating {
+    extendsFrom(configurations["runtimeOnly"])
+}
+val linuxX64RuntimeOnly: Configuration by configurations.creating {
+    extendsFrom(configurations["runtimeOnly"])
+}
+val linuxArm64RuntimeOnly: Configuration by configurations.creating {
+    extendsFrom(configurations["runtimeOnly"])
 }
 
 dependencies {
@@ -41,16 +47,23 @@ dependencies {
     implementation("com.jzbrooks:vgo:3.0.0")
     implementation("com.jzbrooks:vgo-core:3.0.0")
 
+    macosArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-macos-arm64:0.8.18")
+    linuxArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.8.18")
+    linuxX64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.8.18")
+    windowsArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-windows-arm64:0.8.18")
+    windowsX64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.8.18")
+
     r8("com.android.tools:r8:8.5.35")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
-kotlin.sourceSets
-    .getByName("main")
-    .kotlin
-    .srcDir("src/generated/kotlin")
+sourceSets {
+    main {
+        kotlin.srcDir("src/generated/kotlin")
+    }
+}
 
 tasks {
     test {
@@ -109,29 +122,25 @@ tasks {
 
     for ((os, architectures) in targets) {
         for (arch in architectures) {
-            register<Jar>("$os${arch.capitalized()}Jar") {
-                dependsOn(configurations.runtimeClasspath)
-                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            val target = "$os${arch.capitalized()}"
 
+            register<Jar>("${target}Jar") {
                 manifest {
                     attributes["Main-Class"] = "com.jzbrooks.vat.MainKt"
                     attributes["Bundle-Version"] = version
                 }
 
+                archiveBaseName.set("vat-$os-$arch")
+                destinationDirectory.set(layout.buildDirectory.dir("libs/debug"))
+
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                 val sourceClasses = sourceSets.main.get().output.classesDirs
 
                 inputs.files(sourceClasses)
 
-                archiveBaseName.set("vat-$os-$arch")
-                destinationDirectory.set(layout.buildDirectory.dir("libs/debug"))
-
-                from(files(sourceClasses))
-                from(
-                    configurations.runtimeClasspath
-                        .get()
-                        .asFileTree.files
-                        .map(::zipTree),
-                )
+                from(sourceClasses.files)
+                from(configurations["${target}RuntimeOnly"].asFileTree.files.map(::zipTree))
+                from(configurations.runtimeClasspath.get().asFileTree.files.map(::zipTree))
 
                 exclude(
                     "**/*.kotlin_metadata",
@@ -154,7 +163,7 @@ tasks {
                 )
             }
 
-            register<JavaExec>("$os${arch.capitalized()}Optimize") {
+            register<JavaExec>("${target}Optimize") {
                 description = "Runs r8 on the jar application."
                 group = "build"
 
@@ -178,16 +187,16 @@ tasks {
                     "build/libs/debug/vat-$os-$arch-$version.jar",
                 )
 
-                dependsOn("$os${arch.capitalized()}Jar")
+                dependsOn("${target}Jar")
             }
 
             if (os != "windows") {
                 val binaryFileProp = layout.buildDirectory.file("libs/vat-$os-$arch")
-                register("$os${arch.capitalized()}Binary") {
+                register("${target}Binary") {
                     description = "Prepends shell script in the jar to improve CLI"
                     group = "build"
 
-                    dependsOn("$os${arch.capitalized()}Optimize")
+                    dependsOn("${target}Optimize")
 
                     inputs.file("build/libs/vat-$os-$arch.jar")
                     outputs.file(binaryFileProp)
