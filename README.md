@@ -25,10 +25,13 @@ The image can be found at http://plurib.us/1shot/2008/eleven_below/.
 ```
 > vat [options] [file]
 
+vat renders vector artwork (SVG & Android Vector Drawable) to the terminal.
+
 Options:
-  -s --scale      scale factor (float or integer)
-  -h --help       print this message
-  -v --version    print the version number
+  --background-color   background color in hexadecimal RGBA format
+  -s --scale           scale factor (float or integer)
+  -h --help            print this message
+  -v --version         print the version number
 ```
 
 > `java -jar vat` for Windows

@@ -19,9 +19,10 @@ private const val HELP_MESSAGE = """
 vat renders vector artwork (SVG & Android Vector Drawable) to the terminal.
 
 Options:
-  -s --scale      scale factor (float or integer)
-  -h --help       print this message
-  -v --version    print the version number
+  --background-color   background color in hexadecimal RGBA format
+  -s --scale           scale factor (float or integer)
+  -h --help            print this message
+  -v --version         print the version number
 """
 
 @OptIn(ExperimentalEncodingApi::class)
@@ -41,7 +42,7 @@ fun main(args: Array<String>) {
         return
     }
 
-    val scale = argReader.readOption("s|scale")?.let {
+    val scale = argReader.readOption("scale|s")?.let {
         val factor = it.toFloatOrNull()
         if (factor != null) {
             factor
@@ -50,6 +51,17 @@ fun main(args: Array<String>) {
             1f
         }
     } ?: 1f
+
+    val backgroundColor = argReader.readOption("background-color")?.let {
+        val rgba = it.removePrefix("0x").chunked(2).mapNotNull { it.toIntOrNull(16) }
+        if (rgba.size == 4) {
+            // The RGBA color must be re-packed as ARGB for skia, per its color packing rules
+            (rgba[3] shl 24) or (rgba[0] shl 16) or (rgba[1] shl 8) or rgba[2]
+        } else {
+            System.err.println("Unable to parse $it as a hexadecimal RGBA color e.g. 0xFF0000FF (red)")
+            null
+        }
+    } ?: 0
 
     val path = argReader.readArguments().first()
     val image =
@@ -88,7 +100,7 @@ fun main(args: Array<String>) {
     }
 
     val surface = Surface.makeRasterN32Premul((width * scale).roundToInt(), (height * scale).roundToInt())
-    surface.canvas.clear(0)
+    surface.canvas.clear(backgroundColor)
 
     val visitor = DrawingVisitor(surface.canvas, scale, scale)
     image.accept(visitor)

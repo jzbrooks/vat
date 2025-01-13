@@ -4,16 +4,11 @@
 
 ### Added
 - Build targets for windows and linux systems
+- Handle SVGs supported by vgo
+- `--background-color` option (hexadecimal RGBA format)
 
 ### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
+- Default to transparent background
 
 ## 0.0.2
 
