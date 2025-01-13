@@ -88,7 +88,7 @@ fun main(args: Array<String>) {
     }
 
     val surface = Surface.makeRasterN32Premul((width * scale).roundToInt(), (height * scale).roundToInt())
-    surface.canvas.clear(0xFFFFFFFF.toInt())
+    surface.canvas.clear(0)
 
     val visitor = DrawingVisitor(surface.canvas, scale, scale)
     image.accept(visitor)
