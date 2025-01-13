@@ -5,6 +5,7 @@ import java.nio.file.Paths
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "2.1.0"
+    id("org.jetbrains.changelog") version "2.2.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
 }
 
@@ -77,9 +78,9 @@ tasks {
                             """.trimMargin(),
                         )
 
-                        val vgoProperties = mapOf("VERSION" to version)
+                        val vatProperties = mapOf("VERSION" to version)
 
-                        for (property in vgoProperties) {
+                        for (property in vatProperties) {
                             append("    const val ")
                             append(property.key.uppercase())
                             append(" = \"")

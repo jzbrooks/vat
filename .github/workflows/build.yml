@@ -58,3 +58,50 @@ jobs:
           name: vat-${{ matrix.target }}.jar
           path: build/libs/vat-${{ matrix.target }}-*.jar
 
+  # Prepare a draft release for GitHub Releases page for the manual verification
+  # If accepted and published, release workflow would be triggered
+  releaseDraft:
+    name: Release Draft
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Check out current repository
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Download vat
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ github.workspace }}/dist
+          merge-multiple: true
+
+      - name: Generate SHA-256 checksums
+        run: |
+          for file in ${{ github.workspace }}/dist/*; do
+            sha256sum "$file" | cut -d ' ' -f 1 > "${{ github.workspace }}/dist/$file.sha256"
+          done
+
+      # Remove old release drafts by using the curl request for the available releases with draft flag
+      - name: Remove Old Release Drafts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/{owner}/{repo}/releases \
+            --jq '.[] | select(.draft == true) | .id' \
+            | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
+
+      # Create new release draft - which is not publicly visible and requires manual acceptance
+      - name: Create Release Draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v${{ needs.build.outputs.version }} ${{ github.workspace }}/dist/* \
+            --draft \
+            --title "v${{ needs.build.outputs.version }}" \
+            --notes "$(cat << 'EOM'
+          ${{ needs.build.outputs.changelog }}
+          EOM
+          )"
