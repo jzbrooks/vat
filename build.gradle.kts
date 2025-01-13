@@ -172,7 +172,7 @@ tasks {
                     "--lib",
                     javaHome,
                     "--output",
-                    "build/libs/vat-$os-$arch-$version.jar",
+                    "build/libs/vat-$os-$arch.jar",
                     "--pg-conf",
                     "optimize.pro",
                     "build/libs/debug/vat-$os-$arch-$version.jar",
@@ -189,7 +189,7 @@ tasks {
 
                     dependsOn("$os${arch.capitalized()}Optimize")
 
-                    inputs.file("build/libs/vat-$os-$arch-$version.jar")
+                    inputs.file("build/libs/vat-$os-$arch.jar")
                     outputs.file(binaryFileProp)
 
                     doLast {
@@ -197,7 +197,7 @@ tasks {
                         binaryFile.parentFile.mkdirs()
                         binaryFile.delete()
                         binaryFile.appendText("#!/bin/sh\n\nexec java \$JAVA_OPTS -jar \$0 \"\$@\"\n\n")
-                        file("build/libs/vat-$os-$arch-$version.jar").inputStream()
+                        file("build/libs/vat-$os-$arch.jar").inputStream()
                             .use { binaryFile.appendBytes(it.readBytes()) }
                         binaryFile.setExecutable(true, false)
                     }
