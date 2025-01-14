@@ -92,8 +92,21 @@ fun main(args: Array<String>) {
             Pair(width, height)
         }
         is ScalableVectorGraphic -> {
-            val viewBox = image.foreign["viewBox"]!!.split("[\\s,]+".toRegex()).map { it.filter(Char::isDigit).toInt() }
-            Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
+            val width = image.foreign["width"]?.filter(Char::isDigit)?.toInt()
+            val height = image.foreign["height"]?.filter(Char::isDigit)?.toInt()
+            if (width != null && height != null) {
+                Pair(width, height)
+            } else {
+                val viewBox = image.foreign["viewBox"]?.split("[\\s,]+".toRegex())?.map {
+                    it.filter(Char::isDigit).toInt()
+                }
+                if (viewBox != null) {
+                    Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
+                } else {
+                    System.err.println("Unable to determine image dimensions: $image")
+                    exitProcess(-1)
+                }
+            }
         }
         else -> {
             System.err.println("Unknown image type $image")
