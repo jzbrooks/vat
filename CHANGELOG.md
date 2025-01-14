@@ -3,6 +3,21 @@
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## 0.0.3 - 2025-01-14
+
+### Added
+
 - Build targets for windows and linux systems
 - Handle very simple SVGs supported by vgo
   - style tags aren't handled
@@ -10,9 +25,11 @@
 - `--background-color` option (hexadecimal RGBA format)
 
 ### Fixed
+
 - Handle group transformations
 
 ### Changed
+
 - Default to transparent background
 
 ## 0.0.2
