@@ -1,5 +1,7 @@
 package com.jzbrooks.vat
 
+import com.jzbrooks.vgo.core.graphic.Element
+import com.jzbrooks.vgo.core.util.element.traverseTopDown
 import com.jzbrooks.vgo.svg.ScalableVectorGraphic
 import com.jzbrooks.vgo.vd.VectorDrawable
 import org.jetbrains.skia.EncodedImageFormat
@@ -103,7 +105,7 @@ fun main(args: Array<String>) {
     surface.canvas.clear(backgroundColor)
 
     val visitor = DrawingVisitor(surface.canvas, scale, scale)
-    image.accept(visitor)
+    traverseTopDown(image) { it.accept(visitor) }
 
     val raster = surface.makeImageSnapshot()
 

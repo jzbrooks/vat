@@ -32,33 +32,17 @@ import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.Path as SkiaPath
 
 class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : ElementVisitor {
-    override fun visit(graphic: Graphic) {
-        for (element in graphic.elements) {
-            element.accept(this)
-        }
-    }
+    override fun visit(graphic: Graphic) {}
 
     override fun visit(clipPath: ClipPath) {
-        for (element in clipPath.elements) {
-            if (element is ContainerElement) {
-                element.accept(this)
-            } else if (element is Path) {
-                canvas.clipPath(element.toSkiaPath())
-            }
+        for (path in clipPath.elements.filterIsInstance<Path>()) {
+            canvas.clipPath(path.toSkiaPath())
         }
     }
 
-    override fun visit(group: Group) {
-        for (element in group.elements) {
-            element.accept(this)
-        }
-    }
+    override fun visit(group: Group) {}
 
-    override fun visit(extra: Extra) {
-        for (element in extra.elements) {
-            element.accept(this)
-        }
-    }
+    override fun visit(extra: Extra) {}
 
     override fun visit(path: Path) {
         val strokePaint =
