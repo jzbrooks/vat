@@ -4,7 +4,9 @@
 
 ### Added
 - Build targets for windows and linux systems
-- Handle SVGs supported by vgo
+- Handle very simple SVGs supported by vgo
+  - style tags aren't handled
+  - nested clip paths aren't handled
 - `--background-color` option (hexadecimal RGBA format)
 
 ### Fixed
