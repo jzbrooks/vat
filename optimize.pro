@@ -6,6 +6,8 @@
 -mergeinterfacesaggressively
 -verbose
 
+-keepattributes SourceFile, LineNumberTable
+
 -keep class com.jzbrooks.vat.MainKt {
   public static void main(java.lang.String[]);
 }
