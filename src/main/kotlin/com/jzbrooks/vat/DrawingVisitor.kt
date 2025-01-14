@@ -18,6 +18,7 @@ import com.jzbrooks.vgo.core.graphic.command.QuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothCubicBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
+import com.jzbrooks.vgo.core.optimization.BakeTransformations
 import com.jzbrooks.vgo.core.optimization.BreakoutImplicitCommands
 import com.jzbrooks.vgo.core.optimization.CommandVariant
 import com.jzbrooks.vgo.core.util.math.Point
@@ -40,7 +41,9 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
         }
     }
 
-    override fun visit(group: Group) {}
+    override fun visit(group: Group) {
+        BakeTransformations().visit(group)
+    }
 
     override fun visit(extra: Extra) {}
 

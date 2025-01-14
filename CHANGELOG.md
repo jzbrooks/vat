@@ -7,6 +7,9 @@
 - Handle SVGs supported by vgo
 - `--background-color` option (hexadecimal RGBA format)
 
+### Fixed
+- Handle group transformations
+
 ### Changed
 - Default to transparent background
 
