@@ -1,7 +1,6 @@
 package com.jzbrooks.vat
 
 import com.jzbrooks.vgo.core.graphic.ClipPath
-import com.jzbrooks.vgo.core.graphic.ContainerElement
 import com.jzbrooks.vgo.core.graphic.ElementVisitor
 import com.jzbrooks.vgo.core.graphic.Extra
 import com.jzbrooks.vgo.core.graphic.Graphic

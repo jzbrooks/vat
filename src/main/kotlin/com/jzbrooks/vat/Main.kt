@@ -1,6 +1,5 @@
 package com.jzbrooks.vat
 
-import com.jzbrooks.vgo.core.graphic.Element
 import com.jzbrooks.vgo.core.util.element.traverseTopDown
 import com.jzbrooks.vgo.svg.ScalableVectorGraphic
 import com.jzbrooks.vgo.vd.VectorDrawable
