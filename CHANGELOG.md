@@ -2,17 +2,10 @@
 
 ## Unreleased
 
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
 ### Fixed
 
-### Security
+- Images appear blank or partially drawn if the viewport coordinate system differs from its specified height and width
+- `--background-color` arguments can be prefixed with '#' or '0x'
 
 ## 0.0.3 - 2025-01-14
 
