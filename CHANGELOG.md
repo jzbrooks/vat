@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## 0.0.4 - 2025-01-20
+
 ### Fixed
 
 - Images appear blank or partially drawn if the viewport coordinate system differs from its specified height and width
