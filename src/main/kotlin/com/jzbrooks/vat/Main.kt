@@ -84,27 +84,30 @@ fun main(args: Array<String>) {
         exitProcess(-1)
     }
 
-    val (width, height) = when (image) {
+    val (viewportWidth, viewportHeight) = when (image) {
         is VectorDrawable -> {
-            val width = image.foreign["android:width"]!!.filter(Char::isDigit).toInt()
-            val height = image.foreign["android:height"]!!.filter(Char::isDigit).toInt()
-            Pair(width, height)
-        }
-        is ScalableVectorGraphic -> {
-            val width = image.foreign["width"]?.filter(Char::isDigit)?.toInt()
-            val height = image.foreign["height"]?.filter(Char::isDigit)?.toInt()
+            val width = image.foreign["android:viewportWidth"]?.filter(Char::isDigit)?.toInt()
+            val height = image.foreign["android:viewportHeight"]?.filter(Char::isDigit)?.toInt()
+
             if (width != null && height != null) {
                 Pair(width, height)
             } else {
-                val viewBox = image.foreign["viewBox"]?.split("[\\s,]+".toRegex())?.map {
-                    it.filter(Char::isDigit).toInt()
-                }
-                if (viewBox != null) {
-                    Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
-                } else {
-                    System.err.println("Unable to determine image dimensions: $image")
-                    exitProcess(-1)
-                }
+                System.err.println("Unable to determine image viewport dimensions: $image")
+                exitProcess(-1)
+            }
+        }
+        is ScalableVectorGraphic -> {
+            // todo: technically SVGs can omit this attribute and draw at a size implicit by the image
+            val viewBox = image.foreign["viewBox"]?.split("[\\s,]+".toRegex())?.map {
+                it.filter(Char::isDigit).toInt()
+            }
+            if (viewBox != null) {
+                // todo: since the start coordinates can non-zero, some translation of the
+                //  path coordinate system is probably necessary
+                Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
+            } else {
+                System.err.println("Unable to determine image viewport dimensions dimensions: $image")
+                exitProcess(-1)
             }
         }
         else -> {
@@ -113,10 +116,46 @@ fun main(args: Array<String>) {
         }
     }
 
-    val surface = Surface.makeRasterN32Premul((width * scale).roundToInt(), (height * scale).roundToInt())
+    val (width, height) = when (image) {
+        is VectorDrawable -> {
+            val width = image.foreign["android:width"]?.filter(Char::isDigit)?.toInt()
+            val height = image.foreign["android:height"]?.filter(Char::isDigit)?.toInt()
+
+            if (width != null && height != null) {
+                Pair(width, height)
+            } else {
+                System.err.println("Unable to determine image dimensions: $image")
+                exitProcess(-1)
+            }
+        }
+        is ScalableVectorGraphic -> {
+            val width = image.foreign["width"]?.filter(Char::isDigit)?.toInt()
+            val height = image.foreign["height"]?.filter(Char::isDigit)?.toInt()
+
+            if (width != null && height != null) {
+                Pair(width, height)
+            } else {
+                System.err.println("Unable to determine image dimensions: $image")
+                exitProcess(-1)
+            }
+        }
+        else -> {
+            System.err.println("Unknown image type $image")
+            exitProcess(-1)
+        }
+    }
+
+    val finalScaleX = (width / viewportWidth.toFloat()) * scale
+    val finalScaleY = (height / viewportHeight.toFloat()) * scale
+
+    val surface = Surface.makeRasterN32Premul(
+        (viewportWidth * finalScaleX).roundToInt(),
+        (viewportHeight * finalScaleY).roundToInt(),
+    )
+
     surface.canvas.clear(backgroundColor)
 
-    val visitor = DrawingVisitor(surface.canvas, scale, scale)
+    val visitor = DrawingVisitor(surface.canvas, finalScaleX, finalScaleY)
     traverseTopDown(image) { it.accept(visitor) }
 
     val raster = surface.makeImageSnapshot()
