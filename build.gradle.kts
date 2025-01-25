@@ -4,9 +4,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.1.0"
-    id("org.jetbrains.changelog") version "2.2.1"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.changelog)
+    alias(libs.plugins.ktlint)
 }
 
 group = "com.jzbrooks"
@@ -42,21 +42,21 @@ val linuxArm64RuntimeOnly: Configuration by configurations.creating {
 }
 
 dependencies {
-    implementation("org.jetbrains.skiko:skiko:0.8.18")
+    implementation(libs.skiko)
 
-    implementation("com.jzbrooks:vgo:3.0.0")
-    implementation("com.jzbrooks:vgo-core:3.0.0")
+    implementation(libs.vgo)
+    implementation(libs.vgoCore)
 
-    macosArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-macos-arm64:0.8.18")
-    linuxArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.8.18")
-    linuxX64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.8.18")
-    windowsArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-windows-arm64:0.8.18")
-    windowsX64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.8.18")
+    macosArm64RuntimeOnly(libs.skikoMacArm)
+    linuxArm64RuntimeOnly(libs.skikoLinuxArm)
+    linuxX64RuntimeOnly(libs.skikoLinuxIntel)
+    windowsArm64RuntimeOnly(libs.skikoWindowsArm)
+    windowsX64RuntimeOnly(libs.skikoWindowsIntel)
 
-    r8("com.android.tools:r8:8.5.35")
+    r8(libs.r8)
 
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation(platform(libs.junitBom))
+    testImplementation(libs.junitJupiter)
 }
 
 sourceSets {
