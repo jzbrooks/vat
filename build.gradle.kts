@@ -48,7 +48,7 @@ dependencies {
     implementation("com.jzbrooks:vgo-core:3.0.0")
 
     macosArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-macos-arm64:0.8.18")
-    linuxArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.8.18")
+    linuxArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.8.19")
     linuxX64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.8.18")
     windowsArm64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-windows-arm64:0.8.18")
     windowsX64RuntimeOnly("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.8.18")
