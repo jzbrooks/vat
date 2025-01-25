@@ -42,7 +42,7 @@ val linuxArm64RuntimeOnly: Configuration by configurations.creating {
 }
 
 dependencies {
-    implementation("org.jetbrains.skiko:skiko:0.8.18")
+    implementation("org.jetbrains.skiko:skiko:0.8.19")
 
     implementation("com.jzbrooks:vgo:3.0.0")
     implementation("com.jzbrooks:vgo-core:3.0.0")
