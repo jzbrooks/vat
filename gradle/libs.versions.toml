@@ -3,7 +3,7 @@ changelog = "2.2.1"
 junit = "5.10.0"
 kotlin = "2.1.0"
 ktlintGradle = "12.1.2"
-r8 = "8.5.35"
+r8 = "8.7.18"
 skiko = "0.8.19"
 vgo = "3.0.0"
 
