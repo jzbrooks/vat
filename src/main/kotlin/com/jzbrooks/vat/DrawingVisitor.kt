@@ -25,10 +25,12 @@ import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
 import org.jetbrains.skia.Matrix33
 import org.jetbrains.skia.Paint
+import org.jetbrains.skia.PaintMode
 import org.jetbrains.skia.PaintStrokeCap
 import org.jetbrains.skia.PaintStrokeJoin
 import org.jetbrains.skia.PathDirection
 import org.jetbrains.skia.PathEllipseArc
+import org.jetbrains.skia.PathFillMode
 import org.jetbrains.skia.Path as SkiaPath
 
 class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : ElementVisitor {
@@ -49,8 +51,8 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
     override fun visit(path: Path) {
         val strokePaint =
             Paint().apply {
+                mode = PaintMode.STROKE
                 isAntiAlias = true
-                setStroke(true)
                 strokeWidth = path.strokeWidth
                 strokeMiter = path.strokeMiterLimit
                 strokeJoin = when (path.strokeLineJoin) {
@@ -78,6 +80,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
 
         val fillPaint =
             Paint().apply {
+                mode = PaintMode.FILL
                 isAntiAlias = true
                 color4f =
                     Color4f(
@@ -100,6 +103,11 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
 
         var previousControlPoint = Point.ZERO
         val path = SkiaPath().apply {
+            fillMode = when (fillRule) {
+                Path.FillRule.NON_ZERO -> PathFillMode.WINDING
+                Path.FillRule.EVEN_ODD -> PathFillMode.EVEN_ODD
+            }
+
             for (command in commands) {
                 if (command.shouldResetPreviousControlPoint) {
                     previousControlPoint = Point.ZERO
