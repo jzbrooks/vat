@@ -2,7 +2,22 @@
 
 ## Unreleased
 
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
 ### Fixed
+
+### Security
+
+## 0.0.5 - 2025-01-26
+
+### Fixed
+
 - Avoid translating coodinates for smooth bézier curves
 - Track path fill rules when drawing
 - Correctly parse floating point dimensions
