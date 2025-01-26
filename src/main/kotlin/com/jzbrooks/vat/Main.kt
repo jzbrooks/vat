@@ -86,8 +86,8 @@ fun main(args: Array<String>) {
 
     val (viewportWidth, viewportHeight) = when (image) {
         is VectorDrawable -> {
-            val width = image.foreign["android:viewportWidth"]?.filter(Char::isDigit)?.toInt()
-            val height = image.foreign["android:viewportHeight"]?.filter(Char::isDigit)?.toInt()
+            val width = image.foreign["android:viewportWidth"]?.dropLastWhile(Char::isLetter)?.toFloat()
+            val height = image.foreign["android:viewportHeight"]?.dropLastWhile(Char::isLetter)?.toFloat()
 
             if (width != null && height != null) {
                 Pair(width, height)
@@ -98,10 +98,10 @@ fun main(args: Array<String>) {
         }
         is ScalableVectorGraphic -> {
             // todo: technically SVGs can omit this attribute and draw at a size implicit by the image
-            val viewBox = image.foreign["viewBox"]?.split("[\\s,]+".toRegex())?.map {
-                it.filter(Char::isDigit).toInt()
+            val viewBox = image.foreign["viewBox"]?.split("[\\s,]+".toRegex())?.mapNotNull {
+                it.dropLastWhile(Char::isLetter).toFloatOrNull()
             }
-            if (viewBox != null) {
+            if (viewBox != null && viewBox.size > 3) {
                 // todo: since the start coordinates can non-zero, some translation of the
                 //  path coordinate system is probably necessary
                 Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
@@ -118,8 +118,8 @@ fun main(args: Array<String>) {
 
     val (width, height) = when (image) {
         is VectorDrawable -> {
-            val width = image.foreign["android:width"]?.filter(Char::isDigit)?.toInt()
-            val height = image.foreign["android:height"]?.filter(Char::isDigit)?.toInt()
+            val width = image.foreign["android:width"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
+            val height = image.foreign["android:height"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
 
             if (width != null && height != null) {
                 Pair(width, height)
@@ -129,8 +129,8 @@ fun main(args: Array<String>) {
             }
         }
         is ScalableVectorGraphic -> {
-            val width = image.foreign["width"]?.filter(Char::isDigit)?.toInt()
-            val height = image.foreign["height"]?.filter(Char::isDigit)?.toInt()
+            val width = image.foreign["width"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
+            val height = image.foreign["height"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
 
             if (width != null && height != null) {
                 Pair(width, height)
