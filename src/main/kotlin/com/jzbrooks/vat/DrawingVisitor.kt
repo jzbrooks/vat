@@ -144,7 +144,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
                     is SmoothCubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val reflected = checkNotNull(previousControlPoint) * -1f
+                        val reflected = checkNotNull(previousControlPoint)
                         rCubicTo(reflected.x, reflected.y, params.endControl.x, params.endControl.y, params.end.x, params.end.y)
                         previousControlPoint = params.endControl
                     }
@@ -155,7 +155,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
                     is SmoothQuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val reflected = checkNotNull(previousControlPoint) * -1f
+                        val reflected = checkNotNull(previousControlPoint)
                         rQuadTo(reflected.x, reflected.y, params.x, params.y)
                         previousControlPoint = reflected
                     }
