@@ -2,7 +2,7 @@
 changelog = "2.2.1"
 junit = "5.11.4"
 kotlin = "2.1.10"
-ktlintGradle = "12.1.2"
+ktlintGradle = "12.2.0"
 r8 = "8.7.18"
 skiko = "0.8.25"
 vgo = "3.0.0"
