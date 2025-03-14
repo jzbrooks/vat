@@ -5,7 +5,7 @@ kotlin = "2.1.10"
 ktlintGradle = "12.2.0"
 r8 = "8.7.18"
 skiko = "0.9.2"
-vgo = "3.0.0"
+vgo = "3.1.0"
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
