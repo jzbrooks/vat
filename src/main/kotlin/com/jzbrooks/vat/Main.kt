@@ -1,18 +1,18 @@
 package com.jzbrooks.vat
 
+import com.jzbrooks.vgo.core.util.ExperimentalVgoApi
 import com.jzbrooks.vgo.core.util.element.traverseTopDown
+import com.jzbrooks.vgo.iv.ImageVector
 import com.jzbrooks.vgo.svg.ScalableVectorGraphic
+import com.jzbrooks.vgo.util.parse
 import com.jzbrooks.vgo.vd.VectorDrawable
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Surface
 import java.io.File
-import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
-import com.jzbrooks.vgo.svg.parse as svgParse
-import com.jzbrooks.vgo.vd.parse as vdParse
 
 private const val HELP_MESSAGE = """
 > vat [options] [file]
@@ -26,21 +26,19 @@ Options:
   -v --version         print the version number
 """
 
-@OptIn(ExperimentalEncodingApi::class)
+@OptIn(ExperimentalVgoApi::class)
 fun main(args: Array<String>) {
     val argReader = ArgReader(args.toMutableList())
     val printHelp = argReader.readFlag("help|h")
     if (printHelp) {
         println(HELP_MESSAGE)
         exitProcess(0)
-        return
     }
 
     val printVersion = argReader.readFlag("version|v")
     if (printVersion) {
         println(BuildConstants.VERSION)
         exitProcess(0)
-        return
     }
 
     val scale = argReader.readOption("scale|s")?.let {
@@ -65,19 +63,7 @@ fun main(args: Array<String>) {
     } ?: 0
 
     val path = argReader.readArguments().first()
-    val image =
-        File(path).inputStream().use { inputStream ->
-            val documentBuilderFactory = DocumentBuilderFactory.newInstance()
-
-            val document = documentBuilderFactory.newDocumentBuilder().parse(inputStream)
-            document.documentElement.normalize()
-
-            when (document.documentElement.tagName) {
-                "vector" -> vdParse(document.documentElement)
-                "svg" -> svgParse(document.documentElement)
-                else -> null
-            }
-        }
+    val image = parse(File(path))
 
     if (image == null) {
         System.err.println("Unable to load image $path")
@@ -110,6 +96,10 @@ fun main(args: Array<String>) {
                 exitProcess(-1)
             }
         }
+        is ImageVector -> {
+            Pair(image.viewportWidth, image.viewportHeight)
+        }
+
         else -> {
             System.err.println("Unknown image type $image")
             exitProcess(-1)
@@ -139,14 +129,17 @@ fun main(args: Array<String>) {
                 exitProcess(-1)
             }
         }
+        is ImageVector -> {
+            Pair(image.defaultWidthDp, image.defaultHeightDp)
+        }
         else -> {
             System.err.println("Unknown image type $image")
             exitProcess(-1)
         }
     }
 
-    val finalScaleX = (width / viewportWidth.toFloat()) * scale
-    val finalScaleY = (height / viewportHeight.toFloat()) * scale
+    val finalScaleX = (width / viewportWidth) * scale
+    val finalScaleY = (height / viewportHeight) * scale
 
     val surface = Surface.makeRasterN32Premul(
         (viewportWidth * finalScaleX).roundToInt(),
@@ -168,6 +161,7 @@ fun main(args: Array<String>) {
 
     val byteArray = pngData.bytes
 
+    @OptIn(ExperimentalEncodingApi::class)
     val data = Base64.encode(byteArray)
 
     val command = "\u001B_Ga=T,f=100;$data\u001B\\"
