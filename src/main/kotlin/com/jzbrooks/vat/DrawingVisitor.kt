@@ -17,9 +17,9 @@ import com.jzbrooks.vgo.core.graphic.command.QuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothCubicBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
-import com.jzbrooks.vgo.core.optimization.BakeTransformations
-import com.jzbrooks.vgo.core.optimization.BreakoutImplicitCommands
-import com.jzbrooks.vgo.core.optimization.CommandVariant
+import com.jzbrooks.vgo.core.transformation.BakeTransformations
+import com.jzbrooks.vgo.core.transformation.BreakoutImplicitCommands
+import com.jzbrooks.vgo.core.transformation.CommandVariant
 import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
