@@ -4,15 +4,7 @@
 
 ### Added
 
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
+- Basic ImageVector support for [vgo-supported ImageVectors](https://github.com/jzbrooks/vgo/releases/tag/v3.2.0)
 
 ## 0.0.5 - 2025-01-26
 
