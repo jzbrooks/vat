@@ -1,6 +1,6 @@
 ## vat
 
-vat renders vector graphics (SVG & Android Vector Drawables) to your terminal.
+vat renders vector graphics (SVG, Compose ImageVectors, & Android Vector Drawables) to your terminal.
 
 Any terminal that implements the kitty graphics protocol should work (ghostty, kitty, wezterm, etc)
 
