@@ -47,6 +47,8 @@ dependencies {
     implementation(libs.vgo)
     implementation(libs.vgoCore)
 
+    implementation(libs.kotlinCompiler)
+
     macosArm64RuntimeOnly(libs.skikoMacArm)
     linuxArm64RuntimeOnly(libs.skikoLinuxArm)
     linuxX64RuntimeOnly(libs.skikoLinuxIntel)
