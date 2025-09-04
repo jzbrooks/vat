@@ -101,7 +101,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
         BreakoutImplicitCommands().visit(this)
         CommandVariant(CommandVariant.Mode.Relative).visit(this)
 
-        var previousControlPoint = Point.ZERO
+        var previousCubicControl = Point.ZERO
         val path = SkiaPath().apply {
             fillMode = when (fillRule) {
                 Path.FillRule.NON_ZERO -> PathFillMode.WINDING
@@ -110,7 +110,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
 
             for (command in commands) {
                 if (command.shouldResetPreviousControlPoint) {
-                    previousControlPoint = Point.ZERO
+                    previousCubicControl = Point.ZERO
                 }
 
                 when (command) {
@@ -132,6 +132,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
                     is CubicBezierCurve -> {
                         val params = command.parameters.first()
+                        val pen = Point(lastPt.x, lastPt.y)
                         rCubicTo(
                             params.startControl.x,
                             params.startControl.y,
@@ -140,24 +141,25 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                             params.end.x,
                             params.end.y,
                         )
-                        previousControlPoint = params.endControl
+                        previousCubicControl = params.endControl + pen
                     }
                     is SmoothCubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val reflected = checkNotNull(previousControlPoint)
+                        val pen = Point(lastPt.x, lastPt.y)
+                        val reflected = Point(2 * pen.x - previousCubicControl.x, 2 * pen.y - previousCubicControl.y) - pen
                         rCubicTo(reflected.x, reflected.y, params.endControl.x, params.endControl.y, params.end.x, params.end.y)
-                        previousControlPoint = params.endControl
+                        previousCubicControl = params.endControl + pen
                     }
                     is QuadraticBezierCurve -> {
                         val params = command.parameters.first()
                         rQuadTo(params.control.x, params.control.y, params.end.x, params.end.y)
-                        previousControlPoint = params.control
+                        previousCubicControl = params.control
                     }
                     is SmoothQuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val reflected = checkNotNull(previousControlPoint)
+                        val reflected = previousCubicControl
                         rQuadTo(reflected.x, reflected.y, params.x, params.y)
-                        previousControlPoint = reflected
+                        previousCubicControl = reflected
                     }
 
                     is EllipticalArcCurve -> {
