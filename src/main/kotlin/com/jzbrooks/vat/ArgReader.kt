@@ -75,11 +75,10 @@ class ArgReader(
         private fun isOptionArgument(
             name: String,
             argument: String,
-        ): Boolean =
-            if (name.length == 1) {
-                "-$name" == argument
-            } else {
-                "--$name" == argument
-            }
+        ): Boolean = if (name.length == 1) {
+            "-$name" == argument
+        } else {
+            "--$name" == argument
+        }
     }
 }
