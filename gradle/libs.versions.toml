@@ -1,7 +1,7 @@
 [versions]
 changelog = "2.2.1"
 junit = "5.13.4"
-kotlin = "2.1.21"
+kotlin = "2.2.10"
 ktlintGradle = "13.1.0"
 r8 = "8.7.18"
 skiko = "0.9.24"
