@@ -9,6 +9,7 @@ import com.jzbrooks.vgo.core.graphic.Path
 import com.jzbrooks.vgo.core.graphic.command.ClosePath
 import com.jzbrooks.vgo.core.graphic.command.Command
 import com.jzbrooks.vgo.core.graphic.command.CubicBezierCurve
+import com.jzbrooks.vgo.core.graphic.command.CubicCurve
 import com.jzbrooks.vgo.core.graphic.command.EllipticalArcCurve
 import com.jzbrooks.vgo.core.graphic.command.HorizontalLineTo
 import com.jzbrooks.vgo.core.graphic.command.LineTo
@@ -102,6 +103,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
         CommandVariant(CommandVariant.Mode.Relative).visit(this)
 
         var previousCubicControl = Point.ZERO
+        var previousQuadControl = Point.ZERO
         val path = SkiaPath().apply {
             fillMode = when (fillRule) {
                 Path.FillRule.NON_ZERO -> PathFillMode.WINDING
@@ -109,8 +111,12 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
             }
 
             for (command in commands) {
-                if (command.shouldResetPreviousControlPoint) {
+                if (command !is CubicCurve<*>) {
                     previousCubicControl = Point.ZERO
+                }
+
+                if (command !is QuadraticBezierCurve && command !is SmoothQuadraticBezierCurve) {
+                    previousQuadControl = Point.ZERO
                 }
 
                 when (command) {
@@ -152,14 +158,16 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
                     is QuadraticBezierCurve -> {
                         val params = command.parameters.first()
+                        val pen = Point(lastPt.x, lastPt.y)
                         rQuadTo(params.control.x, params.control.y, params.end.x, params.end.y)
-                        previousCubicControl = params.control
+                        previousQuadControl = params.control + pen
                     }
                     is SmoothQuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val reflected = previousCubicControl
+                        val pen = Point(lastPt.x, lastPt.y)
+                        val reflected = Point(2 * pen.x - previousQuadControl.x, 2 * pen.y - previousQuadControl.y) - pen
                         rQuadTo(reflected.x, reflected.y, params.x, params.y)
-                        previousCubicControl = reflected
+                        previousQuadControl = reflected + pen
                     }
 
                     is EllipticalArcCurve -> {
