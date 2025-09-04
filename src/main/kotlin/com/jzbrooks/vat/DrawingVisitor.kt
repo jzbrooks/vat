@@ -7,7 +7,6 @@ import com.jzbrooks.vgo.core.graphic.Graphic
 import com.jzbrooks.vgo.core.graphic.Group
 import com.jzbrooks.vgo.core.graphic.Path
 import com.jzbrooks.vgo.core.graphic.command.ClosePath
-import com.jzbrooks.vgo.core.graphic.command.Command
 import com.jzbrooks.vgo.core.graphic.command.CubicBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.CubicCurve
 import com.jzbrooks.vgo.core.graphic.command.EllipticalArcCurve
@@ -33,6 +32,7 @@ import org.jetbrains.skia.PathDirection
 import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.PathFillMode
 import org.jetbrains.skia.Path as SkiaPath
+import org.jetbrains.skia.Point as SkiaPoint
 
 class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : ElementVisitor {
     override fun visit(graphic: Graphic) {}
@@ -138,7 +138,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
                     is CubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val pen = Point(lastPt.x, lastPt.y)
+                        val currentPoint = lastPt.toPoint()
                         rCubicTo(
                             params.startControl.x,
                             params.startControl.y,
@@ -147,27 +147,27 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                             params.end.x,
                             params.end.y,
                         )
-                        previousCubicControl = params.endControl + pen
+                        previousCubicControl = params.endControl + currentPoint
                     }
                     is SmoothCubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val pen = Point(lastPt.x, lastPt.y)
-                        val reflected = Point(2 * pen.x - previousCubicControl.x, 2 * pen.y - previousCubicControl.y) - pen
+                        val currentPoint = lastPt.toPoint()
+                        val reflected = currentPoint * 2f - previousCubicControl - currentPoint
                         rCubicTo(reflected.x, reflected.y, params.endControl.x, params.endControl.y, params.end.x, params.end.y)
-                        previousCubicControl = params.endControl + pen
+                        previousCubicControl = params.endControl + currentPoint
                     }
                     is QuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val pen = Point(lastPt.x, lastPt.y)
+                        val currentPoint = lastPt.toPoint()
                         rQuadTo(params.control.x, params.control.y, params.end.x, params.end.y)
-                        previousQuadControl = params.control + pen
+                        previousQuadControl = params.control + currentPoint
                     }
                     is SmoothQuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val pen = Point(lastPt.x, lastPt.y)
-                        val reflected = Point(2 * pen.x - previousQuadControl.x, 2 * pen.y - previousQuadControl.y) - pen
+                        val currentPoint = lastPt.toPoint()
+                        val reflected = currentPoint * 2f - previousQuadControl - currentPoint
                         rQuadTo(reflected.x, reflected.y, params.x, params.y)
-                        previousQuadControl = reflected + pen
+                        previousQuadControl = reflected + currentPoint
                     }
 
                     is EllipticalArcCurve -> {
@@ -202,21 +202,5 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
         }
     }
 
-    private val Command.shouldResetPreviousControlPoint: Boolean
-        get() =
-            when (this) {
-                is MoveTo,
-                is LineTo,
-                is HorizontalLineTo,
-                is VerticalLineTo,
-                is EllipticalArcCurve,
-                ClosePath,
-                -> true
-
-                is CubicBezierCurve,
-                is SmoothCubicBezierCurve,
-                is QuadraticBezierCurve,
-                is SmoothQuadraticBezierCurve,
-                -> false
-            }
+    private fun SkiaPoint.toPoint() = Point(x, y)
 }
