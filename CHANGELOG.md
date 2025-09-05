@@ -2,7 +2,22 @@
 
 ## Unreleased
 
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
 ### Fixed
+
+### Security
+
+## 0.0.7 - 2025-09-05
+
+### Fixed
+
 - Draw shorthand Bézier curves correctly
 
 ## 0.0.6 - 2025-05-04
