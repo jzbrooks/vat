@@ -57,7 +57,7 @@ jobs:
 
       - name: Archive vat-${{ matrix.target }}
         if: ${{ contains(matrix.target, 'macos') || contains(matrix.target, 'linux') }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: vat-${{ matrix.target }}
           path: build/libs/vat-${{ matrix.target }}
@@ -70,7 +70,7 @@ jobs:
 
       - name: Archive vat-${{ matrix.target }}.jar
         if: ${{ contains(matrix.target, 'windows') }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: vat-${{ matrix.target }}.jar
           path: build/libs/vat-${{ matrix.target }}.jar
@@ -90,7 +90,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download vat
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: ${{ github.workspace }}/dist
           merge-multiple: true
