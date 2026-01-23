@@ -111,14 +111,6 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
             }
 
             for (command in commands) {
-                if (command !is CubicCurve<*>) {
-                    previousCubicControl = lastPt.toPoint()
-                }
-
-                if (command !is QuadraticBezierCurve && command !is SmoothQuadraticBezierCurve) {
-                    previousQuadControl = lastPt.toPoint()
-                }
-
                 when (command) {
                     is MoveTo -> {
                         val coord = command.parameters.first()
@@ -190,6 +182,14 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
 
                     ClosePath -> closePath()
+                }
+
+                if (command !is CubicCurve<*>) {
+                    previousCubicControl = lastPt.toPoint()
+                }
+
+                if (command !is QuadraticBezierCurve && command !is SmoothQuadraticBezierCurve) {
+                    previousQuadControl = lastPt.toPoint()
                 }
             }
         }
