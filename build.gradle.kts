@@ -203,7 +203,7 @@ tasks {
                         val binaryFile = binaryFileProp.get().asFile
                         binaryFile.parentFile.mkdirs()
                         binaryFile.delete()
-                        binaryFile.appendText("#!/bin/sh\n\nexec java \$JAVA_OPTS -jar \$0 \"\$@\"\n\n")
+                        binaryFile.appendText("#!/bin/sh\n\nexec java --enable-native-access=ALL-UNNAMED \$JAVA_OPTS -jar \$0 \"\$@\"\n\n")
                         file("build/libs/vat-$os-$arch.jar").inputStream()
                             .use { binaryFile.appendBytes(it.readBytes()) }
                         binaryFile.setExecutable(true, false)
