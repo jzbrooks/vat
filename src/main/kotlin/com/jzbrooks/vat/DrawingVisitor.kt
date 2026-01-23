@@ -112,11 +112,11 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
 
             for (command in commands) {
                 if (command !is CubicCurve<*>) {
-                    previousCubicControl = Point.ZERO
+                    previousCubicControl = lastPt.toPoint()
                 }
 
                 if (command !is QuadraticBezierCurve && command !is SmoothQuadraticBezierCurve) {
-                    previousQuadControl = Point.ZERO
+                    previousQuadControl = lastPt.toPoint()
                 }
 
                 when (command) {
