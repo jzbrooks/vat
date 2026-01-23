@@ -20,5 +20,6 @@
 -dontwarn org.jetbrains.annotations.**
 -dontwarn org.jetbrains.kotlin.com.google.**
 -dontwarn org.jetbrains.kotlin.com.intellij.**
+-dontwarn org.jetbrains.kotlin.io.opentelemetry.**
 -dontwarn org.jetbrains.kotlin.org.apache.commons.compress.**
 -dontwarn org.mozilla.universalchardet.**
