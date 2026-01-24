@@ -2,17 +2,9 @@
 
 ## Unreleased
 
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
 ### Fixed
-
-### Security
+- Implicit control points for shorthand curves are correctly tracked
+- Opt in to System.load for skia in exec script
 
 ## 0.0.7 - 2025-09-05
 
