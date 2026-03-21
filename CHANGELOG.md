@@ -5,16 +5,10 @@
 ### Added
 - `--output <path>` or `-o <path>` writes the rendered image to a file as a raster image (png)
 
-### Changed
-
-### Deprecated
-
-### Removed
-
 ### Fixed
-- svgs without a viewbox failed to render
-
-### Security
+- SVGs without a viewbox failed to render
+- Circle elements failed to render
+- Printed the entire image content with image rendering failed
 
 ## 0.0.8 - 2026-01-24
 
