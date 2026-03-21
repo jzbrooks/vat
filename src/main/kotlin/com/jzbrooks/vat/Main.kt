@@ -21,6 +21,7 @@ vat renders vector artwork (SVG & Android Vector Drawable) to the terminal.
 
 Options:
   --background-color   background color in hexadecimal RGBA format
+  -o --output          write the resulting bitmap to a file
   -s --scale           scale factor (float or integer)
   -h --help            print this message
   -v --version         print the version number
@@ -40,6 +41,8 @@ fun main(args: Array<String>) {
         println(BuildConstants.VERSION)
         exitProcess(0)
     }
+
+    val outputPath = argReader.readOption("output|o")
 
     val scale = argReader.readOption("scale|s")?.let {
         val factor = it.toFloatOrNull()
@@ -166,9 +169,12 @@ fun main(args: Array<String>) {
 
     val byteArray = pngData.bytes
 
-    @OptIn(ExperimentalEncodingApi::class)
-    val data = Base64.encode(byteArray)
-
-    val command = "\u001B_Ga=T,f=100;$data\u001B\\"
-    println(command)
+    if (outputPath != null) {
+        File(outputPath).writeBytes(byteArray)
+    } else {
+        @OptIn(ExperimentalEncodingApi::class)
+        val data = Base64.encode(byteArray)
+        val command = "\u001B_Ga=T,f=100;$data\u001B\\"
+        println(command)
+    }
 }

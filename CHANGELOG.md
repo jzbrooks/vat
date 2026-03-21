@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- `--output <path>` or `-o <path>` writes the rendered image to a file as a raster image (png)
 
 ### Changed
 
@@ -11,6 +12,7 @@
 ### Removed
 
 ### Fixed
+- svgs without a viewbox failed to render
 
 ### Security
 
