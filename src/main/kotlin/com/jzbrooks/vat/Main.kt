@@ -83,7 +83,6 @@ fun main(args: Array<String>) {
             }
         }
         is ScalableVectorGraphic -> {
-            // todo: technically SVGs can omit this attribute and draw at a size implicit by the image
             val viewBox = image.foreign["viewBox"]?.split("[\\s,]+".toRegex())?.mapNotNull {
                 it.dropLastWhile(Char::isLetter).toFloatOrNull()
             }
@@ -92,8 +91,14 @@ fun main(args: Array<String>) {
                 //  path coordinate system is probably necessary
                 Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
             } else {
-                System.err.println("Unable to determine image viewport dimensions dimensions: $image")
-                exitProcess(-1)
+                val width = image.foreign["width"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
+                val height = image.foreign["height"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
+                if (width != null && height != null) {
+                    Pair(width, height)
+                } else {
+                    System.err.println("Unable to determine image viewport dimensions: $path")
+                    exitProcess(-1)
+                }
             }
         }
         is ImageVector -> {
@@ -125,7 +130,7 @@ fun main(args: Array<String>) {
             if (width != null && height != null) {
                 Pair(width, height)
             } else {
-                System.err.println("Unable to determine image dimensions: $image")
+                System.err.println("Unable to determine image dimensions: $path")
                 exitProcess(-1)
             }
         }
