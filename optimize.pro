@@ -18,6 +18,7 @@
 -dontwarn kotlin.annotations.jvm.**
 -dontwarn org.checkerframework.checker.nullness.qual.**
 -dontwarn org.jetbrains.annotations.**
+-dontwarn org.jetbrains.kotlin.buildtools.internal.**
 -dontwarn org.jetbrains.kotlin.com.google.**
 -dontwarn org.jetbrains.kotlin.com.intellij.**
 -dontwarn org.jetbrains.kotlin.io.opentelemetry.**
