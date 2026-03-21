@@ -4,7 +4,7 @@ junit = "6.0.3"
 kotlin = "2.3.0"
 ktlintGradle = "14.2.0"
 r8 = "9.1.31"
-skiko = "0.9.47"
+skiko = "0.144.4"
 vgo = "3.3.0"
 
 [plugins]
