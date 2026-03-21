@@ -27,6 +27,7 @@ import org.jetbrains.skia.Paint
 import org.jetbrains.skia.PaintMode
 import org.jetbrains.skia.PaintStrokeCap
 import org.jetbrains.skia.PaintStrokeJoin
+import org.jetbrains.skia.PathBuilder
 import org.jetbrains.skia.PathDirection
 import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.PathFillMode
@@ -166,12 +167,12 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
 
         var previousCubicControl = Point.ZERO
         var previousQuadControl = Point.ZERO
-        val path = SkiaPath().apply {
-            fillMode = when (fillRule) {
+        val path = PathBuilder(
+            when (fillRule) {
                 Path.FillRule.NON_ZERO -> PathFillMode.WINDING
                 Path.FillRule.EVEN_ODD -> PathFillMode.EVEN_ODD
-            }
-
+            },
+        ).apply {
             for (command in commands) {
                 when (command) {
                     is MoveTo -> {
@@ -192,7 +193,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
                     is CubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = lastPt.toPoint()
+                        val currentPoint = requireLastPt().toPoint()
                         rCubicTo(
                             params.startControl.x,
                             params.startControl.y,
@@ -205,20 +206,20 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     }
                     is SmoothCubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = lastPt.toPoint()
+                        val currentPoint = requireLastPt().toPoint()
                         val reflected = currentPoint * 2f - previousCubicControl - currentPoint
                         rCubicTo(reflected.x, reflected.y, params.endControl.x, params.endControl.y, params.end.x, params.end.y)
                         previousCubicControl = params.endControl + currentPoint
                     }
                     is QuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = lastPt.toPoint()
+                        val currentPoint = requireLastPt().toPoint()
                         rQuadTo(params.control.x, params.control.y, params.end.x, params.end.y)
                         previousQuadControl = params.control + currentPoint
                     }
                     is SmoothQuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = lastPt.toPoint()
+                        val currentPoint = requireLastPt().toPoint()
                         val reflected = currentPoint * 2f - previousQuadControl - currentPoint
                         rQuadTo(reflected.x, reflected.y, params.x, params.y)
                         previousQuadControl = reflected + currentPoint
@@ -247,22 +248,26 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                 }
 
                 if (command !is CubicCurve<*>) {
-                    previousCubicControl = lastPt.toPoint()
+                    previousCubicControl = requireLastPt().toPoint()
                 }
 
                 if (command !is QuadraticBezierCurve && command !is SmoothQuadraticBezierCurve) {
-                    previousQuadControl = lastPt.toPoint()
+                    previousQuadControl = requireLastPt().toPoint()
                 }
+            }
+
+            if (sX != null && sY != null) {
+                val scale = Matrix33.makeScale(sX, sY)
+                transform(scale)
             }
         }
 
-        return if (sX != null && sY != null) {
-            val scale = Matrix33.makeScale(sX, sY)
-            path.transform(scale)
-        } else {
-            path
-        }
+        return path.snapshot()
     }
 
     private fun SkiaPoint.toPoint() = Point(x, y)
+
+    private fun PathBuilder.requireLastPt(): SkiaPoint = requireNotNull(snapshot().lastPt) {
+        "The path must have at least one point."
+    }
 }
