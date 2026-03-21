@@ -32,7 +32,6 @@ import org.jetbrains.skia.PathDirection
 import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.PathFillMode
 import org.jetbrains.skia.Path as SkiaPath
-import org.jetbrains.skia.Point as SkiaPoint
 
 class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : ElementVisitor {
     override fun visit(graphic: Graphic) {
@@ -167,6 +166,8 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
 
         var previousCubicControl = Point.ZERO
         var previousQuadControl = Point.ZERO
+        var currentPoint = Point.ZERO
+        var subpathStart = Point.ZERO
         val path = PathBuilder(
             when (fillRule) {
                 Path.FillRule.NON_ZERO -> PathFillMode.WINDING
@@ -178,22 +179,26 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     is MoveTo -> {
                         val coord = command.parameters.first()
                         rMoveTo(coord.x, coord.y)
+                        currentPoint += coord
+                        subpathStart = currentPoint
                     }
                     is LineTo -> {
                         val coord = command.parameters.first()
                         rLineTo(coord.x, coord.y)
+                        currentPoint += coord
                     }
                     is HorizontalLineTo -> {
                         val coord = command.parameters.first()
                         rLineTo(coord, 0f)
+                        currentPoint += Point(coord, 0f)
                     }
                     is VerticalLineTo -> {
                         val coord = command.parameters.first()
                         rLineTo(0f, coord)
+                        currentPoint += Point(0f, coord)
                     }
                     is CubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = requireLastPt().toPoint()
                         rCubicTo(
                             params.startControl.x,
                             params.startControl.y,
@@ -203,26 +208,27 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                             params.end.y,
                         )
                         previousCubicControl = params.endControl + currentPoint
+                        currentPoint += params.end
                     }
                     is SmoothCubicBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = requireLastPt().toPoint()
-                        val reflected = currentPoint * 2f - previousCubicControl - currentPoint
+                        val reflected = currentPoint - previousCubicControl
                         rCubicTo(reflected.x, reflected.y, params.endControl.x, params.endControl.y, params.end.x, params.end.y)
                         previousCubicControl = params.endControl + currentPoint
+                        currentPoint += params.end
                     }
                     is QuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = requireLastPt().toPoint()
                         rQuadTo(params.control.x, params.control.y, params.end.x, params.end.y)
                         previousQuadControl = params.control + currentPoint
+                        currentPoint += params.end
                     }
                     is SmoothQuadraticBezierCurve -> {
                         val params = command.parameters.first()
-                        val currentPoint = requireLastPt().toPoint()
-                        val reflected = currentPoint * 2f - previousQuadControl - currentPoint
+                        val reflected = currentPoint - previousQuadControl
                         rQuadTo(reflected.x, reflected.y, params.x, params.y)
                         previousQuadControl = reflected + currentPoint
+                        currentPoint += Point(params.x, params.y)
                     }
 
                     is EllipticalArcCurve -> {
@@ -242,17 +248,21 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                             params.end.x,
                             params.end.y,
                         )
+                        currentPoint += params.end
                     }
 
-                    ClosePath -> closePath()
+                    ClosePath -> {
+                        closePath()
+                        currentPoint = subpathStart
+                    }
                 }
 
                 if (command !is CubicCurve<*>) {
-                    previousCubicControl = requireLastPt().toPoint()
+                    previousCubicControl = currentPoint
                 }
 
                 if (command !is QuadraticBezierCurve && command !is SmoothQuadraticBezierCurve) {
-                    previousQuadControl = requireLastPt().toPoint()
+                    previousQuadControl = currentPoint
                 }
             }
 
@@ -263,11 +273,5 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
         }
 
         return path.snapshot()
-    }
-
-    private fun SkiaPoint.toPoint() = Point(x, y)
-
-    private fun PathBuilder.requireLastPt(): SkiaPoint = requireNotNull(snapshot().lastPt) {
-        "The path must have at least one point."
     }
 }
