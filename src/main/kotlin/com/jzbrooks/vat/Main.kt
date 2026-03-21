@@ -1,7 +1,6 @@
 package com.jzbrooks.vat
 
 import com.jzbrooks.vgo.core.util.ExperimentalVgoApi
-import com.jzbrooks.vgo.core.util.element.traverseTopDown
 import com.jzbrooks.vgo.iv.ImageVector
 import com.jzbrooks.vgo.svg.ScalableVectorGraphic
 import com.jzbrooks.vgo.util.parse
@@ -54,13 +53,14 @@ fun main(args: Array<String>) {
         }
     } ?: 1f
 
-    val backgroundColor = argReader.readOption("background-color")?.let {
-        val rgba = it.removePrefix("0x").removePrefix("#").chunked(2).mapNotNull { it.toIntOrNull(16) }
+    val backgroundColor = argReader.readOption("background-color")?.let { backgroundColor ->
+        val rgba = backgroundColor.removePrefix("0x").removePrefix("#").chunked(2)
+            .mapNotNull { it.toIntOrNull(16) }
         if (rgba.size == 4) {
             // The RGBA color must be re-packed as ARGB for skia, per its color packing rules
             (rgba[3] shl 24) or (rgba[0] shl 16) or (rgba[1] shl 8) or rgba[2]
         } else {
-            System.err.println("Unable to parse $it as a hexadecimal RGBA color e.g. 0xFF0000FF (red)")
+            System.err.println("Unable to parse $backgroundColor as a hexadecimal RGBA color e.g. 0xFF0000FF (red)")
             null
         }
     } ?: 0
@@ -157,7 +157,7 @@ fun main(args: Array<String>) {
     surface.canvas.clear(backgroundColor)
 
     val visitor = DrawingVisitor(surface.canvas, finalScaleX, finalScaleY)
-    traverseTopDown(image) { it.accept(visitor) }
+    visitor.visit(image)
 
     val raster = surface.makeImageSnapshot()
 

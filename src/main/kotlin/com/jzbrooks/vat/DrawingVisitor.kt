@@ -17,7 +17,6 @@ import com.jzbrooks.vgo.core.graphic.command.QuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothCubicBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
-import com.jzbrooks.vgo.core.transformation.BakeTransformations
 import com.jzbrooks.vgo.core.transformation.BreakoutImplicitCommands
 import com.jzbrooks.vgo.core.transformation.CommandVariant
 import com.jzbrooks.vgo.core.util.math.Point
@@ -35,7 +34,9 @@ import org.jetbrains.skia.Path as SkiaPath
 import org.jetbrains.skia.Point as SkiaPoint
 
 class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : ElementVisitor {
-    override fun visit(graphic: Graphic) {}
+    override fun visit(graphic: Graphic) {
+        graphic.elements.forEach { it.accept(this) }
+    }
 
     override fun visit(clipPath: ClipPath) {
         for (path in clipPath.elements.filterIsInstance<Path>()) {
@@ -44,10 +45,71 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
     }
 
     override fun visit(group: Group) {
-        BakeTransformations().visit(group)
+        // This can be replaced with a BakeTransformations call when
+        // https://github.com/jzbrooks/vgo/issues/232 is fixed
+        canvas.save()
+        val t = group.transform
+        canvas.concat(
+            Matrix33(
+                t[0, 0], t[0, 1], t[0, 2],
+                t[1, 0], t[1, 1], t[1, 2],
+                t[2, 0], t[2, 1], t[2, 2],
+            ),
+        )
+        group.elements.forEach { it.accept(this) }
+        canvas.restore()
     }
 
-    override fun visit(extra: Extra) {}
+    // Ideally, there would be a transformation that converts
+    // all svg shapes to paths, which could be applied before drawing.
+    override fun visit(extra: Extra) {
+        when (extra.name) {
+            "circle" -> {
+                val cx = extra.foreign["cx"]?.toFloatOrNull() ?: return
+                val cy = extra.foreign["cy"]?.toFloatOrNull() ?: return
+                val r = extra.foreign["r"]?.toFloatOrNull() ?: return
+                val fill = extra.foreign["fill"]?.let { parseColor(it) }
+
+                if (fill != null) {
+                    canvas.drawCircle(
+                        cx,
+                        cy,
+                        r,
+                        Paint().apply {
+                            mode = PaintMode.FILL
+                            isAntiAlias = true
+                            color4f = fill
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    private fun parseColor(color: String): Color4f? {
+        val hex = color.removePrefix("#")
+        return when (hex.length) {
+            3 -> {
+                val r = hex[0].digitToInt(16)
+                val g = hex[1].digitToInt(16)
+                val b = hex[2].digitToInt(16)
+                Color4f((r * 17) / 255f, (g * 17) / 255f, (b * 17) / 255f, 1f)
+            }
+            6 -> Color4f(
+                hex.substring(0, 2).toInt(16) / 255f,
+                hex.substring(2, 4).toInt(16) / 255f,
+                hex.substring(4, 6).toInt(16) / 255f,
+                1f,
+            )
+            8 -> Color4f(
+                hex.substring(0, 2).toInt(16) / 255f,
+                hex.substring(2, 4).toInt(16) / 255f,
+                hex.substring(4, 6).toInt(16) / 255f,
+                hex.substring(6, 8).toInt(16) / 255f,
+            )
+            else -> null
+        }
+    }
 
     override fun visit(path: Path) {
         val strokePaint =
