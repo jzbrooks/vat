@@ -3,9 +3,25 @@
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## 0.0.9 - 2026-03-22
+
+### Added
+
 - `--output <path>` or `-o <path>` writes the rendered image to a file as a raster image (png)
 
 ### Fixed
+
 - SVGs without a viewbox failed to render
 - Circle elements failed to render
 - Printed the entire image content with image rendering failed
