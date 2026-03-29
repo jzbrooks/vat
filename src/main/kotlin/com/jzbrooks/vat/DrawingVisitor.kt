@@ -1,7 +1,6 @@
 package com.jzbrooks.vat
 
 import com.jzbrooks.vgo.core.graphic.ClipPath
-import com.jzbrooks.vgo.core.graphic.ElementVisitor
 import com.jzbrooks.vgo.core.graphic.Extra
 import com.jzbrooks.vgo.core.graphic.Graphic
 import com.jzbrooks.vgo.core.graphic.Group
@@ -17,8 +16,7 @@ import com.jzbrooks.vgo.core.graphic.command.QuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothCubicBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
-import com.jzbrooks.vgo.core.transformation.BreakoutImplicitCommands
-import com.jzbrooks.vgo.core.transformation.CommandVariant
+import com.jzbrooks.vgo.core.transformation.TopDownTransformer
 import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
@@ -33,10 +31,8 @@ import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.PathFillMode
 import org.jetbrains.skia.Path as SkiaPath
 
-class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : ElementVisitor {
-    override fun visit(graphic: Graphic) {
-        graphic.elements.forEach { it.accept(this) }
-    }
+class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : TopDownTransformer {
+    override fun visit(graphic: Graphic) {}
 
     override fun visit(clipPath: ClipPath) {
         for (path in clipPath.elements.filterIsInstance<Path>()) {
@@ -44,21 +40,7 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
         }
     }
 
-    override fun visit(group: Group) {
-        // This can be replaced with a BakeTransformations call when
-        // https://github.com/jzbrooks/vgo/issues/232 is fixed
-        canvas.save()
-        val t = group.transform
-        canvas.concat(
-            Matrix33(
-                t[0, 0], t[0, 1], t[0, 2],
-                t[1, 0], t[1, 1], t[1, 2],
-                t[2, 0], t[2, 1], t[2, 2],
-            ),
-        )
-        group.elements.forEach { it.accept(this) }
-        canvas.restore()
-    }
+    override fun visit(group: Group) {}
 
     // Ideally, there would be a transformation that converts
     // all svg shapes to paths, which could be applied before drawing.
@@ -161,9 +143,6 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
     }
 
     private fun Path.toSkiaPath(): SkiaPath {
-        BreakoutImplicitCommands().visit(this)
-        CommandVariant(CommandVariant.Mode.Relative).visit(this)
-
         var previousCubicControl = Point.ZERO
         var previousQuadControl = Point.ZERO
         var currentPoint = Point.ZERO

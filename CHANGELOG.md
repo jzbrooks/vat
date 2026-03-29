@@ -5,10 +5,12 @@
 ### Added
 
 ### Changed
+- Use vgo machinery for traversing IR
 
 ### Deprecated
 
 ### Removed
+- Remove nested transformation workaround introduced in 507f78898cb1c432f8f8d066b03ab71bd9e9fc27 which was fixed upstream in vgo 3.4.0
 
 ### Fixed
 

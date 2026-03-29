@@ -156,8 +156,7 @@ fun main(args: Array<String>) {
 
     surface.canvas.clear(backgroundColor)
 
-    val visitor = DrawingVisitor(surface.canvas, finalScaleX, finalScaleY)
-    visitor.visit(image)
+    RenderingTransformationRegistry(surface.canvas, finalScaleX, finalScaleY).apply(image)
 
     val raster = surface.makeImageSnapshot()
 
