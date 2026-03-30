@@ -133,8 +133,7 @@ fun main(args: Array<String>) {
             if (width != null && height != null) {
                 Pair(width, height)
             } else {
-                System.err.println("Unable to determine image dimensions: $path")
-                exitProcess(-1)
+                Pair(viewportWidth, viewportHeight)
             }
         }
         is ImageVector -> {
