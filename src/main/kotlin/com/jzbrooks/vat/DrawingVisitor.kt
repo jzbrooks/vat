@@ -1,8 +1,9 @@
 package com.jzbrooks.vat
 
 import com.jzbrooks.vgo.core.graphic.ClipPath
+import com.jzbrooks.vgo.core.graphic.ContainerElement
+import com.jzbrooks.vgo.core.graphic.Element
 import com.jzbrooks.vgo.core.graphic.Extra
-import com.jzbrooks.vgo.core.graphic.Graphic
 import com.jzbrooks.vgo.core.graphic.Group
 import com.jzbrooks.vgo.core.graphic.Path
 import com.jzbrooks.vgo.core.graphic.command.ClosePath
@@ -16,7 +17,9 @@ import com.jzbrooks.vgo.core.graphic.command.QuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothCubicBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
-import com.jzbrooks.vgo.core.transformation.TopDownTransformer
+import com.jzbrooks.vgo.core.transformation.BreakoutImplicitCommands
+import com.jzbrooks.vgo.core.transformation.CommandVariant
+import com.jzbrooks.vgo.core.util.math.Matrix3
 import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
@@ -31,20 +34,40 @@ import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.PathFillMode
 import org.jetbrains.skia.Path as SkiaPath
 
-class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY: Float?) : TopDownTransformer {
-    override fun visit(graphic: Graphic) {}
+class DrawingVisitor(val canvas: Canvas) {
+    private val pathPreprocessing = listOf(
+        BreakoutImplicitCommands(),
+        CommandVariant(CommandVariant.Mode.Relative),
+    )
 
-    override fun visit(clipPath: ClipPath) {
-        for (path in clipPath.elements.filterIsInstance<Path>()) {
-            canvas.clipPath(path.toSkiaPath())
+    fun render(element: Element) {
+        when (element) {
+            is ContainerElement -> when (element) {
+                is Group -> {
+                    val hasTransform = !element.transform.contentsEqual(Matrix3.IDENTITY)
+                    if (hasTransform) {
+                        canvas.save()
+                        canvas.concat(element.transform.toSkiaMatrix33())
+                    }
+                    for (child in element.elements) render(child)
+                    if (hasTransform) {
+                        canvas.restore()
+                    }
+                }
+                is ClipPath -> {
+                    for (path in element.elements.filterIsInstance<Path>()) {
+                        canvas.clipPath(path.toSkiaPath())
+                    }
+                }
+                is Extra -> drawExtra(element)
+                else -> for (child in element.elements) render(child)
+            }
+
+            is Path -> drawPath(element)
         }
     }
 
-    override fun visit(group: Group) {}
-
-    // Ideally, there would be a transformation that converts
-    // all svg shapes to paths, which could be applied before drawing.
-    override fun visit(extra: Extra) {
+    private fun drawExtra(extra: Extra) {
         when (extra.name) {
             "circle" -> {
                 val cx = extra.foreign["cx"]?.toFloatOrNull() ?: return
@@ -93,7 +116,11 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
         }
     }
 
-    override fun visit(path: Path) {
+    private fun drawPath(path: Path) {
+        for (processor in pathPreprocessing) {
+            processor.visit(path)
+        }
+
         val strokePaint =
             Paint().apply {
                 mode = PaintMode.STROKE
@@ -244,13 +271,14 @@ class DrawingVisitor(val canvas: Canvas, private val sX: Float?, private val sY:
                     previousQuadControl = currentPoint
                 }
             }
-
-            if (sX != null && sY != null) {
-                val scale = Matrix33.makeScale(sX, sY)
-                transform(scale)
-            }
         }
 
         return path.snapshot()
     }
+
+    private fun Matrix3.toSkiaMatrix33(): Matrix33 = Matrix33(
+        this[0, 0], this[0, 1], this[0, 2],
+        this[1, 0], this[1, 1], this[1, 2],
+        this[2, 0], this[2, 1], this[2, 2],
+    )
 }
