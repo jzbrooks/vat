@@ -4,17 +4,10 @@
 
 ### Added
 - SVGs without an explicit width and height are rendered at 100% of the viewport size
-
-### Changed
-
-### Deprecated
-
-### Removed
+- Unit test coverage against golden image renders
 
 ### Fixed
 - Some group transformations were not applied correctly
-
-### Security
 
 ## 0.0.9 - 2026-03-22
 
