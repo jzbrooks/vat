@@ -17,6 +17,22 @@ repositories {
     google()
 }
 
+val osName = System.getProperty("os.name")
+val targetOs =
+    when {
+        osName == "Mac OS X" -> "macos"
+        osName.startsWith("Win") -> "windows"
+        osName.startsWith("Linux") -> "linux"
+        else -> error("Unsupported OS: $osName")
+    }
+
+val targetArch =
+    when (val osArch = System.getProperty("os.arch")) {
+        "x86_64", "amd64" -> "x64"
+        "aarch64" -> "arm64"
+        else -> error("Unsupported arch: $osArch")
+    }
+
 val r8: Configuration by configurations.creating
 
 val targets = mapOf(
@@ -59,6 +75,18 @@ dependencies {
 
     testImplementation(platform(libs.junitBom))
     testImplementation(libs.junitJupiter)
+    testRuntimeOnly(libs.junitLauncher)
+
+    testRuntimeOnly(
+        when {
+            targetOs == "macos" && targetArch == "arm64" -> libs.skikoMacArm
+            targetOs == "linux" && targetArch == "arm64" -> libs.skikoLinuxArm
+            targetOs == "linux" && targetArch == "x64" -> libs.skikoLinuxIntel
+            targetOs == "windows" && targetArch == "arm64" -> libs.skikoWindowsArm
+            targetOs == "windows" && targetArch == "x64" -> libs.skikoWindowsIntel
+            else -> error("Unsupported test platform: $targetOs-$targetArch")
+        },
+    )
 }
 
 sourceSets {
@@ -70,6 +98,7 @@ sourceSets {
 tasks {
     test {
         useJUnitPlatform()
+        systemProperty("vat.updateGoldens", System.getProperty("vat.updateGoldens") ?: "")
     }
 
     val generateConstants by registering {
@@ -212,22 +241,6 @@ tasks {
             }
         }
     }
-
-    val osName = System.getProperty("os.name")
-    val targetOs =
-        when {
-            osName == "Mac OS X" -> "macos"
-            osName.startsWith("Win") -> "windows"
-            osName.startsWith("Linux") -> "linux"
-            else -> error("Unsupported OS: $osName")
-        }
-
-    val targetArch =
-        when (val osArch = System.getProperty("os.arch")) {
-            "x86_64", "amd64" -> "x64"
-            "aarch64" -> "arm64"
-            else -> error("Unsupported arch: $osArch")
-        }
 
     jar {
         description = "Runs r8 on the jar application for the current system ($targetOs-$targetArch)."

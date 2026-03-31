@@ -1,16 +1,9 @@
 package com.jzbrooks.vat
 
-import com.jzbrooks.vgo.core.util.ExperimentalVgoApi
-import com.jzbrooks.vgo.iv.ImageVector
-import com.jzbrooks.vgo.svg.ScalableVectorGraphic
 import com.jzbrooks.vgo.util.parse
-import com.jzbrooks.vgo.vd.VectorDrawable
-import org.jetbrains.skia.EncodedImageFormat
-import org.jetbrains.skia.Surface
 import java.io.File
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
 private const val HELP_MESSAGE = """
@@ -26,7 +19,6 @@ Options:
   -v --version         print the version number
 """
 
-@OptIn(ExperimentalVgoApi::class)
 fun main(args: Array<String>) {
     val argReader = ArgReader(args.toMutableList())
     val printHelp = argReader.readFlag("help|h")
@@ -73,100 +65,12 @@ fun main(args: Array<String>) {
         exitProcess(-1)
     }
 
-    val (viewportWidth, viewportHeight) = when (image) {
-        is VectorDrawable -> {
-            val width = image.foreign["android:viewportWidth"]?.dropLastWhile(Char::isLetter)?.toFloat()
-            val height = image.foreign["android:viewportHeight"]?.dropLastWhile(Char::isLetter)?.toFloat()
-
-            if (width != null && height != null) {
-                Pair(width, height)
-            } else {
-                System.err.println("Unable to determine image viewport dimensions: $image")
-                exitProcess(-1)
-            }
-        }
-        is ScalableVectorGraphic -> {
-            val viewBox = image.foreign["viewBox"]?.split("[\\s,]+".toRegex())?.mapNotNull {
-                it.dropLastWhile(Char::isLetter).toFloatOrNull()
-            }
-            if (viewBox != null && viewBox.size > 3) {
-                // todo: since the start coordinates can non-zero, some translation of the
-                //  path coordinate system is probably necessary
-                Pair(viewBox[2] - viewBox[0], viewBox[3] - viewBox[1])
-            } else {
-                val width = image.foreign["width"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
-                val height = image.foreign["height"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
-                if (width != null && height != null) {
-                    Pair(width, height)
-                } else {
-                    System.err.println("Unable to determine image viewport dimensions: $path")
-                    exitProcess(-1)
-                }
-            }
-        }
-        is ImageVector -> {
-            Pair(image.viewportWidth, image.viewportHeight)
-        }
-
-        else -> {
-            System.err.println("Unknown image type $image")
-            exitProcess(-1)
-        }
+    val byteArray = try {
+        renderToPng(image, scale, backgroundColor)
+    } catch (e: IllegalArgumentException) {
+        System.err.println(e.message)
+        exitProcess(-1)
     }
-
-    val (width, height) = when (image) {
-        is VectorDrawable -> {
-            val width = image.foreign["android:width"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
-            val height = image.foreign["android:height"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
-
-            if (width != null && height != null) {
-                Pair(width, height)
-            } else {
-                System.err.println("Unable to determine image dimensions: $image")
-                exitProcess(-1)
-            }
-        }
-        is ScalableVectorGraphic -> {
-            val width = image.foreign["width"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
-            val height = image.foreign["height"]?.dropLastWhile(Char::isLetter)?.toFloatOrNull()
-
-            if (width != null && height != null) {
-                Pair(width, height)
-            } else {
-                Pair(viewportWidth, viewportHeight)
-            }
-        }
-        is ImageVector -> {
-            Pair(image.defaultWidthDp, image.defaultHeightDp)
-        }
-        else -> {
-            System.err.println("Unknown image type $image")
-            exitProcess(-1)
-        }
-    }
-
-    val finalScaleX = (width / viewportWidth) * scale
-    val finalScaleY = (height / viewportHeight) * scale
-
-    val surface = Surface.makeRasterN32Premul(
-        (viewportWidth * finalScaleX).roundToInt(),
-        (viewportHeight * finalScaleY).roundToInt(),
-    )
-
-    surface.canvas.clear(backgroundColor)
-    surface.canvas.scale(finalScaleX, finalScaleY)
-
-    DrawingVisitor(surface.canvas).render(image)
-
-    val raster = surface.makeImageSnapshot()
-
-    val pngData =
-        raster.encodeToData(EncodedImageFormat.PNG) ?: run {
-            System.err.println("Unable to encode image data.")
-            exitProcess(-1)
-        }
-
-    val byteArray = pngData.bytes
 
     if (outputPath != null) {
         File(outputPath).writeBytes(byteArray)

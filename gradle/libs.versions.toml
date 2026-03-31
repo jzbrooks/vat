@@ -15,6 +15,7 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
 [libraries]
 junitBom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
 junitJupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junitLauncher = { module = "org.junit.platform:junit-platform-launcher" }
 kotlinCompiler = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "kotlin" }
 r8 = { group = "com.android.tools", name = "r8", version.ref = "r8" }
 skiko = { group = "org.jetbrains.skiko", name = "skiko", version.ref = "skiko" }
