@@ -1,9 +1,9 @@
 package com.jzbrooks.vat
 
-import com.jzbrooks.vgo.core.graphic.ClipPath
+import com.jzbrooks.vgo.core.Color
 import com.jzbrooks.vgo.core.graphic.ContainerElement
 import com.jzbrooks.vgo.core.graphic.Element
-import com.jzbrooks.vgo.core.graphic.Extra
+import com.jzbrooks.vgo.core.graphic.Graphic
 import com.jzbrooks.vgo.core.graphic.Group
 import com.jzbrooks.vgo.core.graphic.Path
 import com.jzbrooks.vgo.core.graphic.command.ClosePath
@@ -19,6 +19,7 @@ import com.jzbrooks.vgo.core.graphic.command.SmoothQuadraticBezierCurve
 import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
 import com.jzbrooks.vgo.core.transformation.BreakoutImplicitCommands
 import com.jzbrooks.vgo.core.transformation.CommandVariant
+import com.jzbrooks.vgo.core.transformation.ConvertShapesToPaths
 import com.jzbrooks.vgo.core.util.math.Matrix3
 import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
@@ -42,77 +43,39 @@ class DrawingVisitor(val canvas: Canvas) {
 
     fun render(element: Element) {
         when (element) {
-            is ContainerElement -> when (element) {
-                is Group -> {
-                    val hasTransform = !element.transform.contentsEqual(Matrix3.IDENTITY)
-                    if (hasTransform) {
-                        canvas.save()
-                        canvas.concat(element.transform.toSkiaMatrix33())
+            is ContainerElement -> {
+                when (element) {
+                    is Group -> {
+                        ConvertShapesToPaths().visit(element)
+                        val hasTransform = !element.transform.contentsEqual(Matrix3.IDENTITY)
+                        val hasClip = element.clipPaths.isNotEmpty()
+                        if (hasTransform || hasClip) {
+                            canvas.save()
+                        }
+                        if (hasTransform) {
+                            canvas.concat(element.transform.toSkiaMatrix33())
+                        }
+                        for (clipPath in element.clipPaths) {
+                            for (region in clipPath.regions) {
+                                for (processor in pathPreprocessing) {
+                                    processor.visit(region)
+                                }
+                                canvas.clipPath(region.toSkiaPath())
+                            }
+                        }
+                        for (child in element.elements) render(child)
+                        if (hasTransform || hasClip) {
+                            canvas.restore()
+                        }
                     }
-                    for (child in element.elements) render(child)
-                    if (hasTransform) {
-                        canvas.restore()
+                    is Graphic -> {
+                        ConvertShapesToPaths().visit(element)
+                        for (child in element.elements) render(child)
                     }
                 }
-                is ClipPath -> {
-                    for (path in element.elements.filterIsInstance<Path>()) {
-                        canvas.clipPath(path.toSkiaPath())
-                    }
-                }
-                is Extra -> drawExtra(element)
-                else -> for (child in element.elements) render(child)
             }
 
             is Path -> drawPath(element)
-        }
-    }
-
-    private fun drawExtra(extra: Extra) {
-        when (extra.name) {
-            "circle" -> {
-                val cx = extra.foreign["cx"]?.toFloatOrNull() ?: return
-                val cy = extra.foreign["cy"]?.toFloatOrNull() ?: return
-                val r = extra.foreign["r"]?.toFloatOrNull() ?: return
-                val fill = extra.foreign["fill"]?.let { parseColor(it) }
-
-                if (fill != null) {
-                    canvas.drawCircle(
-                        cx,
-                        cy,
-                        r,
-                        Paint().apply {
-                            mode = PaintMode.FILL
-                            isAntiAlias = true
-                            color4f = fill
-                        },
-                    )
-                }
-            }
-        }
-    }
-
-    private fun parseColor(color: String): Color4f? {
-        val hex = color.removePrefix("#")
-        return when (hex.length) {
-            3 -> {
-                val r = hex[0].digitToInt(16)
-                val g = hex[1].digitToInt(16)
-                val b = hex[2].digitToInt(16)
-                Color4f((r * 17) / 255f, (g * 17) / 255f, (b * 17) / 255f, 1f)
-            }
-            6 -> Color4f(
-                hex.substring(0, 2).toInt(16) / 255f,
-                hex.substring(2, 4).toInt(16) / 255f,
-                hex.substring(4, 6).toInt(16) / 255f,
-                1f,
-            )
-            8 -> Color4f(
-                hex.substring(0, 2).toInt(16) / 255f,
-                hex.substring(2, 4).toInt(16) / 255f,
-                hex.substring(4, 6).toInt(16) / 255f,
-                hex.substring(6, 8).toInt(16) / 255f,
-            )
-            else -> null
         }
     }
 
@@ -121,8 +84,10 @@ class DrawingVisitor(val canvas: Canvas) {
             processor.visit(path)
         }
 
-        val strokePaint =
-            Paint().apply {
+        val skiaPath = path.toSkiaPath()
+
+        (path.stroke as? Color)?.let { stroke ->
+            val strokePaint = Paint().apply {
                 mode = PaintMode.STROKE
                 isAntiAlias = true
                 strokeWidth = path.strokeWidth
@@ -141,33 +106,27 @@ class DrawingVisitor(val canvas: Canvas) {
                     Path.LineCap.ROUND -> PaintStrokeCap.ROUND
                     Path.LineCap.SQUARE -> PaintStrokeCap.SQUARE
                 }
-                color4f =
-                    Color4f(
-                        path.stroke.red.toInt() / 255f,
-                        path.stroke.green.toInt() / 255f,
-                        path.stroke.blue.toInt() / 255f,
-                        path.stroke.alpha.toInt() / 255f,
-                    )
+                color4f = stroke.toColor4f()
             }
+            canvas.drawPath(skiaPath, strokePaint)
+        }
 
-        val fillPaint =
-            Paint().apply {
+        (path.fill as? Color)?.let { fill ->
+            val fillPaint = Paint().apply {
                 mode = PaintMode.FILL
                 isAntiAlias = true
-                color4f =
-                    Color4f(
-                        path.fill.red.toInt() / 255f,
-                        path.fill.green.toInt() / 255f,
-                        path.fill.blue.toInt() / 255f,
-                        path.fill.alpha.toInt() / 255f,
-                    )
+                color4f = fill.toColor4f()
             }
-
-        val skiaPath = path.toSkiaPath()
-
-        canvas.drawPath(skiaPath, strokePaint)
-        canvas.drawPath(skiaPath, fillPaint)
+            canvas.drawPath(skiaPath, fillPaint)
+        }
     }
+
+    private fun Color.toColor4f(): Color4f = Color4f(
+        red.toInt() / 255f,
+        green.toInt() / 255f,
+        blue.toInt() / 255f,
+        alpha.toInt() / 255f,
+    )
 
     private fun Path.toSkiaPath(): SkiaPath {
         var previousCubicControl = Point.ZERO

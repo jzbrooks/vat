@@ -4,15 +4,13 @@
 
 ### Added
 
+- Render SVG shape elements (rect, circle, ellipse, line, polyline, polygon) via vgo's `ConvertShapesToPaths`
+
 ### Changed
 
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
+- Upgrade vgo to [4.0.0](https://github.com/jzbrooks/vgo/releases/tag/v4.0.0)
+  - Clip paths are more consistently handled
+  - Path fill and stroke are `Brush` values; gradients are not yet supported
 
 ## 1.0.0 - 2026-03-31
 
