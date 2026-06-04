@@ -44,7 +44,7 @@ class GoldenRasterTest {
         @JvmStatic
         fun goldenTestCases(): List<Arguments> {
             val cases = mutableListOf<Arguments>()
-            for (dir in listOf("input/svg", "input/vd")) {
+            for (dir in listOf("input/svg", "input/vd", "input/iv")) {
                 val resource = GoldenRasterTest::class.java.classLoader.getResource(dir) ?: continue
                 File(resource.toURI()).walkTopDown()
                     .filter { it.isFile }
