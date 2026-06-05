@@ -5,6 +5,7 @@
 ### Added
 
 - Render SVG shape elements (rect, circle, ellipse, line, polyline, polygon) via vgo's `ConvertShapesToPaths`
+- Gradients are supported for vector drawables
 
 ### Changed
 
