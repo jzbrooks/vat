@@ -1,6 +1,12 @@
 package com.jzbrooks.vat
 
+import com.jzbrooks.vgo.core.Brush
 import com.jzbrooks.vgo.core.Color
+import com.jzbrooks.vgo.core.Gradient
+import com.jzbrooks.vgo.core.LinearGradient
+import com.jzbrooks.vgo.core.RadialGradient
+import com.jzbrooks.vgo.core.SweepGradient
+import com.jzbrooks.vgo.core.TileMode
 import com.jzbrooks.vgo.core.graphic.ContainerElement
 import com.jzbrooks.vgo.core.graphic.Element
 import com.jzbrooks.vgo.core.graphic.Graphic
@@ -24,6 +30,7 @@ import com.jzbrooks.vgo.core.util.math.Matrix3
 import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color4f
+import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.Matrix33
 import org.jetbrains.skia.Paint
 import org.jetbrains.skia.PaintMode
@@ -33,6 +40,8 @@ import org.jetbrains.skia.PathBuilder
 import org.jetbrains.skia.PathDirection
 import org.jetbrains.skia.PathEllipseArc
 import org.jetbrains.skia.PathFillMode
+import org.jetbrains.skia.Shader
+import org.jetbrains.skia.Gradient as SkiaGradient
 import org.jetbrains.skia.Path as SkiaPath
 
 class DrawingVisitor(val canvas: Canvas) {
@@ -86,39 +95,74 @@ class DrawingVisitor(val canvas: Canvas) {
 
         val skiaPath = path.toSkiaPath()
 
-        (path.stroke as? Color)?.let { stroke ->
-            val strokePaint = Paint().apply {
-                mode = PaintMode.STROKE
-                isAntiAlias = true
-                strokeWidth = path.strokeWidth
-                strokeMiter = path.strokeMiterLimit
-                strokeJoin = when (path.strokeLineJoin) {
-                    Path.LineJoin.MITER -> PaintStrokeJoin.MITER
-                    Path.LineJoin.ROUND -> PaintStrokeJoin.ROUND
-                    Path.LineJoin.BEVEL -> PaintStrokeJoin.BEVEL
+        val strokePaint = Paint().apply {
+            mode = PaintMode.STROKE
+            isAntiAlias = true
+            strokeWidth = path.strokeWidth
+            strokeMiter = path.strokeMiterLimit
+            strokeJoin = when (path.strokeLineJoin) {
+                Path.LineJoin.MITER -> PaintStrokeJoin.MITER
+                Path.LineJoin.ROUND -> PaintStrokeJoin.ROUND
+                Path.LineJoin.BEVEL -> PaintStrokeJoin.BEVEL
 
-                    // todo: these two have no analogs in skia paint
-                    Path.LineJoin.ARCS -> PaintStrokeJoin.ROUND
-                    Path.LineJoin.MITER_CLIP -> PaintStrokeJoin.MITER
-                }
-                strokeCap = when (path.strokeLineCap) {
-                    Path.LineCap.BUTT -> PaintStrokeCap.BUTT
-                    Path.LineCap.ROUND -> PaintStrokeCap.ROUND
-                    Path.LineCap.SQUARE -> PaintStrokeCap.SQUARE
-                }
-                color4f = stroke.toColor4f()
+                // todo: these two have no analogs in skia paint
+                Path.LineJoin.ARCS -> PaintStrokeJoin.ROUND
+                Path.LineJoin.MITER_CLIP -> PaintStrokeJoin.MITER
             }
-            canvas.drawPath(skiaPath, strokePaint)
-        }
+            strokeCap = when (path.strokeLineCap) {
+                Path.LineCap.BUTT -> PaintStrokeCap.BUTT
+                Path.LineCap.ROUND -> PaintStrokeCap.ROUND
+                Path.LineCap.SQUARE -> PaintStrokeCap.SQUARE
+            }
 
-        (path.fill as? Color)?.let { fill ->
-            val fillPaint = Paint().apply {
-                mode = PaintMode.FILL
-                isAntiAlias = true
-                color4f = fill.toColor4f()
-            }
-            canvas.drawPath(skiaPath, fillPaint)
+            path.stroke.applyTo(this)
         }
+        canvas.drawPath(skiaPath, strokePaint)
+
+        val fillPaint = Paint().apply {
+            mode = PaintMode.FILL
+            isAntiAlias = true
+            path.fill.applyTo(this)
+        }
+        canvas.drawPath(skiaPath, fillPaint)
+    }
+
+    private fun Brush.applyTo(paint: Paint) {
+        when (this) {
+            is Color -> paint.color4f = toColor4f()
+            is Gradient -> paint.shader = toSkiaShader()
+        }
+    }
+
+    private fun Gradient.toSkiaShader(): Shader {
+        val colors = stops.map { it.color.toColor4f() }.toTypedArray()
+        val positions = stops.map { it.offset }.toFloatArray()
+        return when (this) {
+            is LinearGradient -> Shader.makeLinearGradient(
+                startX,
+                startY,
+                endX,
+                endY,
+                SkiaGradient(SkiaGradient.Colors(colors, positions, tileMode.toSkiaTileMode())),
+            )
+            is RadialGradient -> Shader.makeRadialGradient(
+                centerX,
+                centerY,
+                radius,
+                SkiaGradient(SkiaGradient.Colors(colors, positions, tileMode.toSkiaTileMode())),
+            )
+            is SweepGradient -> Shader.makeSweepGradient(
+                centerX,
+                centerY,
+                SkiaGradient(SkiaGradient.Colors(colors, positions, FilterTileMode.CLAMP)),
+            )
+        }
+    }
+
+    private fun TileMode.toSkiaTileMode(): FilterTileMode = when (this) {
+        TileMode.CLAMP -> FilterTileMode.CLAMP
+        TileMode.REPEAT -> FilterTileMode.REPEAT
+        TileMode.MIRROR -> FilterTileMode.MIRROR
     }
 
     private fun Color.toColor4f(): Color4f = Color4f(
