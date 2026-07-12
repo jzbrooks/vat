@@ -1,6 +1,6 @@
 [versions]
 changelog = "2.5.0"
-junit = "6.1.1"
+junit = "6.1.2"
 kotlin = "2.4.0"
 ktlintGradle = "14.2.0"
 r8 = "9.1.31"
