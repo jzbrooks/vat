@@ -2,17 +2,11 @@
 
 ## Unreleased
 
-### Added
-
 ### Changed
 
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
+- Upgrade vgo to [4.1.0](https://github.com/jzbrooks/vgo/releases/tag/v4.1.0)
+  - SVG gradients are supported in many common cases
+  - Increased the number of `ImageVector` forms that are parsed.
 
 ## 1.1.0 - 2026-06-05
 

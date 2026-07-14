@@ -10,14 +10,14 @@ plugins {
 }
 
 group = "com.jzbrooks"
-version = "1.1.0"
+version = "1.2.0"
 
 repositories {
     mavenCentral()
     google()
 }
 
-val osName = System.getProperty("os.name")
+val osName: String = System.getProperty("os.name")
 val targetOs =
     when {
         osName == "Mac OS X" -> "macos"
@@ -33,7 +33,7 @@ val targetArch =
         else -> error("Unsupported arch: $osArch")
     }
 
-val r8: Configuration by configurations.creating
+val r8: Configuration = configurations.create("r8")
 
 val targets = mapOf(
     "macos" to listOf("arm64"),
@@ -41,19 +41,19 @@ val targets = mapOf(
     "linux" to listOf("x64", "arm64"),
 )
 
-val macosArm64RuntimeOnly: Configuration by configurations.creating {
+val macosArm64RuntimeOnly: Configuration = configurations.create("macosArm64RuntimeOnly") {
     extendsFrom(configurations["runtimeOnly"])
 }
-val windowsX64RuntimeOnly: Configuration by configurations.creating {
+val windowsX64RuntimeOnly: Configuration = configurations.create("windowsX64RuntimeOnly") {
     extendsFrom(configurations["runtimeOnly"])
 }
-val windowsArm64RuntimeOnly: Configuration by configurations.creating {
+val windowsArm64RuntimeOnly: Configuration = configurations.create("windowsArm64RuntimeOnly") {
     extendsFrom(configurations["runtimeOnly"])
 }
-val linuxX64RuntimeOnly: Configuration by configurations.creating {
+val linuxX64RuntimeOnly: Configuration = configurations.create("linuxX64RuntimeOnly") {
     extendsFrom(configurations["runtimeOnly"])
 }
-val linuxArm64RuntimeOnly: Configuration by configurations.creating {
+val linuxArm64RuntimeOnly: Configuration = configurations.create("linuxArm64RuntimeOnly") {
     extendsFrom(configurations["runtimeOnly"])
 }
 
@@ -78,12 +78,12 @@ dependencies {
     testRuntimeOnly(libs.junitLauncher)
 
     testRuntimeOnly(
-        when {
-            targetOs == "macos" && targetArch == "arm64" -> libs.skikoMacArm
-            targetOs == "linux" && targetArch == "arm64" -> libs.skikoLinuxArm
-            targetOs == "linux" && targetArch == "x64" -> libs.skikoLinuxIntel
-            targetOs == "windows" && targetArch == "arm64" -> libs.skikoWindowsArm
-            targetOs == "windows" && targetArch == "x64" -> libs.skikoWindowsIntel
+        when (targetOs) {
+            "macos" if targetArch == "arm64" -> libs.skikoMacArm
+            "linux" if targetArch == "arm64" -> libs.skikoLinuxArm
+            "linux" if targetArch == "x64" -> libs.skikoLinuxIntel
+            "windows" if targetArch == "arm64" -> libs.skikoWindowsArm
+            "windows" if targetArch == "x64" -> libs.skikoWindowsIntel
             else -> error("Unsupported test platform: $targetOs-$targetArch")
         },
     )
@@ -101,7 +101,8 @@ tasks {
         systemProperty("vat.updateGoldens", System.getProperty("vat.updateGoldens") ?: "")
     }
 
-    val generateConstants by registering {
+    val generateConstants = register("generateConstants") {
+        description = "Generate compile time constants from gradle properties"
         finalizedBy("compileKotlin")
 
         outputs.files("$projectDir/src/generated/kotlin/com/jzbrooks/vat/BuildConstants.kt")
@@ -156,6 +157,7 @@ tasks {
             val target = "$os${arch.capitalized()}"
 
             register<Jar>("${target}Jar") {
+                description = "Jar for $target"
                 manifest {
                     attributes["Main-Class"] = "com.jzbrooks.vat.MainKt"
                     attributes["Bundle-Version"] = version
@@ -232,7 +234,7 @@ tasks {
                         val binaryFile = binaryFileProp.get().asFile
                         binaryFile.parentFile.mkdirs()
                         binaryFile.delete()
-                        binaryFile.appendText("#!/bin/sh\n\nexec java --enable-native-access=ALL-UNNAMED \$JAVA_OPTS -jar \$0 \"\$@\"\n\n")
+                        binaryFile.appendText($$"#!/bin/sh\n\nexec java --enable-native-access=ALL-UNNAMED $JAVA_OPTS -jar $0 \"$@\"\n\n")
                         file("build/libs/vat-$os-$arch.jar").inputStream()
                             .use { binaryFile.appendBytes(it.readBytes()) }
                         binaryFile.setExecutable(true, false)
@@ -248,14 +250,14 @@ tasks {
         dependsOn("$targetOs${targetArch.capitalized()}Jar")
     }
 
-    val optimize by registering {
+    register("optimize") {
         description = "Runs r8 on the jar application for the current system ($targetOs-$targetArch)."
         group = "build"
         dependsOn("$targetOs${targetArch.capitalized()}Optimize")
     }
 
     if (targetOs != "windows") {
-        val binary by registering {
+        register("binary") {
             description =
                 "Prepends shell script in the jar to improve CLI for the current system ($targetOs-$targetArch)"
             group = "build"
