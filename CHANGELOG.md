@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## 1.2.0 - 2026-07-20
+
 ### Changed
 
 - Upgrade vgo to [4.1.0](https://github.com/jzbrooks/vgo/releases/tag/v4.1.0)
