@@ -26,6 +26,7 @@ import com.jzbrooks.vgo.core.graphic.command.VerticalLineTo
 import com.jzbrooks.vgo.core.transformation.BreakoutImplicitCommands
 import com.jzbrooks.vgo.core.transformation.CommandVariant
 import com.jzbrooks.vgo.core.transformation.ConvertShapesToPaths
+import com.jzbrooks.vgo.core.util.element.traverseTopDown
 import com.jzbrooks.vgo.core.util.math.Matrix3
 import com.jzbrooks.vgo.core.util.math.Point
 import org.jetbrains.skia.Canvas
@@ -55,7 +56,6 @@ class DrawingVisitor(val canvas: Canvas) {
             is ContainerElement -> {
                 when (element) {
                     is Group -> {
-                        ConvertShapesToPaths().visit(element)
                         val hasTransform = !element.transform.contentsEqual(Matrix3.IDENTITY)
                         val hasClip = element.clipPaths.isNotEmpty()
                         if (hasTransform || hasClip) {
@@ -78,7 +78,9 @@ class DrawingVisitor(val canvas: Canvas) {
                         }
                     }
                     is Graphic -> {
-                        ConvertShapesToPaths().visit(element)
+                        // Shape conversion is ancestor-scoped, so it has to run across the whole
+                        // graphic in one traversal rather than per container.
+                        traverseTopDown(element, listOf(ConvertShapesToPaths()))
                         for (child in element.elements) render(child)
                     }
                 }

@@ -6,6 +6,9 @@
 
 ### Changed
 
+- Upgrade vgo to [5.0.0](https://github.com/jzbrooks/vgo/releases/tag/v5.0.0)
+  - `fill="transparent"` and `stroke="transparent"` no longer paint black
+
 ### Deprecated
 
 ### Removed
