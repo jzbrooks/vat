@@ -4,6 +4,8 @@ vat renders vector graphics (SVG, Compose ImageVectors, & Android Vector Drawabl
 
 Any terminal that implements the kitty graphics protocol should work (ghostty, kitty, wezterm, etc)
 
+Built on [vgo](https://github.com/jzbrooks/vgo)
+
 ## Installation
 
 #### Homebrew
